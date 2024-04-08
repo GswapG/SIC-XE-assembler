@@ -1,13 +1,16 @@
-   0 COPY START 0
-   0 FIRST STL RETADR
-   3      LDB #LENGTH
-   6      BASE LENGTH
-   6 CLOOP +JSUB RDREC
-   a      LDA LENGTH
-   d      COMP #0
-  10      JEQ ENDFIL
-  13      J CLOOP
-  16 ENDFIL J @RETADR
-  19 RETADR RESW 1
-  19 LENGTH RESW 1
-  19 BUFFER RESB 4096
+     0     SUM  START 0
+     0   FIRST    LDX #0
+     3            LDA #0
+     6           +LDB #TABLE2
+     a           BASE TABLE2
+     a    LOOP    ADD TABLE,X
+     d            ADD TABLE2,X
+    10            TIX COUNT
+    13            JLT LOOP
+    16           +STA TOTAL
+    1a           RSUB 
+    1d   COUNT   RESW 1
+    20   TABLE   RESW 2000
+  1790  TABLE2   RESW 2000
+  2f00   TOTAL   RESW 1
+  2f03            END FIRST

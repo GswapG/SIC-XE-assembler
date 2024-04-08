@@ -10,6 +10,11 @@
 #include <iomanip>
 #include <algorithm>
 
+std::unordered_map<std::string, std::pair<std::string,int>> OpcodeTable;
+std::unordered_map<std::string, std::pair<int,bool>> SymbolTable;
+std::unordered_set<std::string> assemblerDirective;
+std::vector<std::vector<std::string>> file;
+std::vector<std::vector<std::string>> listing;
 
 void firstPass(
     const std::vector<std::vector<std::string>>& instructions, 
@@ -17,6 +22,7 @@ void firstPass(
     std::unordered_map<std::string, std::pair<int, bool>>& symbolTable,
     std::unordered_set<std::string> assemblerDirective)
     {
+    std::vector<std::string> temp;
     int locationCounter = 0;
     
     // Open the intermediate file for writing
@@ -29,6 +35,7 @@ void firstPass(
     for (const auto& instruction : instructions) {
         // Write location counter and instruction to the intermediate file
         intermediateFile << std::setw(6) << std::hex << locationCounter << " "; // Set width to 4 characters for hexadecimal output
+        temp.push_back(std::to_string(locationCounter));
         if(!instruction[0].empty()){
             intermediateFile << std::setw(7) << instruction[0];
         }
@@ -106,10 +113,62 @@ void firstPass(
     storeSymbolTable("symboltable.txt",symbolTable);
 }
 
+void secondPass(
+    const std::string &intermediate, 
+    const std::unordered_map<std::string, std::pair<std::string, int>>& opcodeTable, 
+    std::unordered_map<std::string, std::pair<int, bool>>& symbolTable,
+    std::unordered_set<std::string> assemblerDirective,
+    std::vector<std::vector<std::string>> listing)
+    {
+    std::ifstream inter(intermediate);
+    if(!inter.is_open()){
+        std::cerr << "Error: Unable to open intermediate file" << std::endl;
+        return;
+    }
+    std::string line;
+
+    while(std::getline(inter,line)){
+        std::stringstream ss(line);
+        std::string col1,col2,col3,col4;
+        ss >> col1 >> col2 >> col3 >> col4;
+        if(col4 == ""){
+            col4 = col3;
+            col3 = col2;
+            col2 = "";
+        }
+        std::string opc = "";
+        if(col3[0] == '+'){
+            if(opcodeTable.find(col3.substr(1)) != opcodeTable.end()){
+                opc = opcodeTable.at(col3.substr(1)).first;
+            }
+            else if(assemblerDirective.find(col3.substr(1)) != assemblerDirective.end()){
+                std::cout << "found ASS : " << col3.substr(1) << std::endl;
+            }
+            else{
+                std::cerr << "Unable to find opcode : " << col3.substr(1) << std::endl;
+            }
+        }
+        else{
+            if(opcodeTable.find(col3) != opcodeTable.end()){
+                opc = opcodeTable.at(col3).first;
+            }
+            else if(assemblerDirective.find(col3) != assemblerDirective.end()){
+                std::cout << "found ASS : " << col3 << std::endl;
+            }
+            else{
+                std::cerr << "Unable to find opcode : " << col3 << std::endl;
+            }
+        }
+        if(opc != ""){
+            std::cout << opc << std::endl;
+            int opcode = std::stoi(opc,nullptr,16);
+            std::cout << opcode << std::endl;
+        }
+
+    }
+}
+
 int main(){
-    std::unordered_map<std::string, std::pair<std::string,int>> OpcodeTable;
-    std::unordered_map<std::string, std::pair<int,bool>> SymbolTable;
-    std::unordered_set<std::string> assemblerDirective;
     OpcodeTable = importOpcodeTable("opcodes.txt");
     assemblerDirective = importAssemblerDirectives("directives.txt");
     // for(auto &i : assemblerDirective){
@@ -118,8 +177,9 @@ int main(){
     std::string filename;
     std::cout<<"input file name to read : ";
     std::cin>>filename; 
-    std::vector<std::vector<std::string>> file = readInputFile(filename);
+    file = readInputFile(filename);
     printAssembly(file);
     firstPass(file, OpcodeTable, SymbolTable, assemblerDirective);
     printIntermediateFile("intermediate.txt");
+    secondPass("intermediate.txt", OpcodeTable, SymbolTable, assemblerDirective,listing);
 }

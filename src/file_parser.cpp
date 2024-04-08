@@ -127,6 +127,7 @@ std::unordered_set<std::string> importAssemblerDirectives(
     file.close();
     return assemblerDirective;
 }
+
 void storeSymbolTable(
     const std::string& filename, 
     const std::unordered_map<std::string, 
@@ -149,4 +150,33 @@ void storeSymbolTable(
 
     // Close the CSV file
     outputFile.close();
+}
+
+std::unordered_map<std::string, int> importRegisters(const std::string& filename) {
+    std::unordered_map<std::string, int> registers;
+
+    // Open the registers file for reading
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open file " << filename << std::endl;
+        return registers;
+    }
+
+    // Read each line from the file and extract register mnemonic and number
+    std::string line;
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        std::string mnemonic;
+        int number;
+        if (iss >> mnemonic >> number) {
+            registers[mnemonic.substr(0,1)] = number;
+        } else {
+            std::cerr << "Error: Invalid line format in file " << filename << std::endl;
+        }
+    }
+
+    // Close the file
+    file.close();
+
+    return registers;
 }

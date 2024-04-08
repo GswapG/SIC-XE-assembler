@@ -6,4 +6,7 @@
 void printAssembly(std::vector<std::vector<std::string>> &instructions);
 
 void printIntermediateFile(const std::string& filename);
+
+void printListing(
+    std::vector<std::vector<std::string>> &listing);
 #endif

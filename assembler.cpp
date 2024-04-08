@@ -9,12 +9,47 @@
 #include <unordered_set>
 #include <iomanip>
 #include <algorithm>
+#include <bitset>
 
 std::unordered_map<std::string, std::pair<std::string,int>> OpcodeTable;
 std::unordered_map<std::string, std::pair<int,bool>> SymbolTable;
 std::unordered_set<std::string> assemblerDirective;
 std::vector<std::vector<std::string>> file;
 std::vector<std::vector<std::string>> listing;
+std::unordered_map<std::string,int> registers;
+
+std::string intToBinaryString(int value) {
+    // Mask to extract the last 8 bits
+    const int mask = 0xFC;
+
+    // Extract the last 8 bits using bitwise AND
+    int last8Bits = value & mask;
+
+    // Convert the last 8 bits to a binary string
+    return std::bitset<6>(last8Bits).to_string();
+}
+
+std::string addressGenerator15bit(int value) {
+    return std::bitset<15>(value).to_string();
+}
+
+std::pair<std::string, std::string> getRegister(const std::string& lastColumn) {
+    // Remove whitespace from the last column
+    std::string trimmedColumn;
+    std::remove_copy_if(lastColumn.begin(), lastColumn.end(), std::back_inserter(trimmedColumn), ::isspace);
+
+    // Split the column based on the comma separator
+    size_t commaPos = trimmedColumn.find(',');
+    if (commaPos == std::string::npos) {
+        // If no comma is found, return an empty string for r2
+        return {trimmedColumn, ""};
+    } else {
+        // Extract r1 and r2 from the column
+        std::string r1 = trimmedColumn.substr(0, commaPos);
+        std::string r2 = trimmedColumn.substr(commaPos + 1);
+        return {r1, r2};
+    }
+}
 
 void firstPass(
     const std::vector<std::vector<std::string>>& instructions, 
@@ -117,8 +152,8 @@ void secondPass(
     const std::string &intermediate, 
     const std::unordered_map<std::string, std::pair<std::string, int>>& opcodeTable, 
     std::unordered_map<std::string, std::pair<int, bool>>& symbolTable,
-    std::unordered_set<std::string> assemblerDirective,
-    std::vector<std::vector<std::string>> listing)
+    std::unordered_set<std::string>& assemblerDirective,
+    std::vector<std::vector<std::string>>& listing)
     {
     std::ifstream inter(intermediate);
     if(!inter.is_open()){
@@ -128,6 +163,8 @@ void secondPass(
     std::string line;
 
     while(std::getline(inter,line)){
+        std::vector<std::string> temp;
+        int length;
         std::stringstream ss(line);
         std::string col1,col2,col3,col4;
         ss >> col1 >> col2 >> col3 >> col4;
@@ -140,6 +177,7 @@ void secondPass(
         if(col3[0] == '+'){
             if(opcodeTable.find(col3.substr(1)) != opcodeTable.end()){
                 opc = opcodeTable.at(col3.substr(1)).first;
+                length = opcodeTable.at(col3.substr(1)).second;
             }
             else if(assemblerDirective.find(col3.substr(1)) != assemblerDirective.end()){
                 std::cout << "found ASS : " << col3.substr(1) << std::endl;
@@ -151,6 +189,7 @@ void secondPass(
         else{
             if(opcodeTable.find(col3) != opcodeTable.end()){
                 opc = opcodeTable.at(col3).first;
+                length = opcodeTable.at(col3).second;
             }
             else if(assemblerDirective.find(col3) != assemblerDirective.end()){
                 std::cout << "found ASS : " << col3 << std::endl;
@@ -159,21 +198,114 @@ void secondPass(
                 std::cerr << "Unable to find opcode : " << col3 << std::endl;
             }
         }
+        int opcode = 0;
         if(opc != ""){
-            std::cout << opc << std::endl;
-            int opcode = std::stoi(opc,nullptr,16);
-            std::cout << opcode << std::endl;
+            // std::cout << opc << std::endl;
+            opcode = std::stoi(opc,nullptr,16);
+            // std::cout << opcode << std::endl;
         }
+        else{
+            // This is a assembler directive
+        }
+        std::string binstruction = intToBinaryString(opcode);
+        // std::cout << col3 << " " << binstruction << std::endl;
+        
+        // NOW WE MUST CHECK TYPE OF INSTRUCTION
+        if(length == 2){ // R type
+            binstruction.push_back('0');
+            binstruction.push_back('0');
+            std::pair<std::string,std::string> regs = getRegister(col4);
+            if(regs.second == ""){
+                if(registers.find(regs.first)!=registers.end()){
+                    binstruction.push_back('0');
+                    binstruction.push_back(char(int('0') + (*(registers.find(regs.first))).second));
+                }
+                else{
+                    std::cerr << "Unable to find register : " << regs.second << std::endl;
+                    return;
+                }
+                binstruction.push_back('0');
+                binstruction.push_back('0');
+            }
+            else{
+                if(registers.find(regs.first) != registers.end()){
+                    binstruction.push_back('0');
+                    binstruction.push_back(char(int('0') + (*(registers.find(regs.first))).second));
+                }
+                else{
+                    std::cerr << "Unable to find register : " << regs.first << std::endl;
+                    return;
+                }
+                if(registers.find(regs.second)!=registers.end()){
+                    binstruction.push_back('0');
+                    binstruction.push_back(char(int('0') + (*(registers.find(regs.second))).second));
+                }
+                else{
+                    std::cout<<"t3";
+                    std::cerr << "Unable to find register : " << regs.second << std::endl;
+                    return;
+                }
+            }
+        }
+        else if(length == 1){ 
+            binstruction.push_back('0');
+            binstruction.push_back('0');
+        }
+        else if(col3[0] == '+'){ //extended format
+            // b = 0 p = 0
+            if(col4[col4.size()-1] == 'X' && col4[col4.size()-2] == ','){ //indexed
+                //nix = 1 e = 1
+                binstruction.push_back('1');
+                binstruction.push_back('1');
+                binstruction.push_back('1');
+                binstruction.push_back('0');
+                binstruction.push_back('0');
+                binstruction.push_back('1');
+            }
+            else if(col4[0] == '@'){//immediate
+                binstruction.push_back('1');
+                binstruction.push_back('0');
+                binstruction.push_back('0');
+                binstruction.push_back('0');
+                binstruction.push_back('0');
+                binstruction.push_back('1');    
 
+            }
+            else if(col4[0] == '#'){
+                binstruction.push_back('0');
+                binstruction.push_back('1');
+                binstruction.push_back('0');
+                binstruction.push_back('0');
+                binstruction.push_back('0');
+                binstruction.push_back('1');
+            }
+            else{//simple
+                binstruction.push_back('1');
+                binstruction.push_back('1');
+                binstruction.push_back('0');
+                binstruction.push_back('0');
+                binstruction.push_back('0');
+                binstruction.push_back('1');
+                binstruction += addressGenerator15bit((*(symbolTable.find(col4))).second.first);
+            }
+
+        }
+        else{ //length = 3 or error 
+
+        }
+        temp.push_back(col1);
+        temp.push_back(col2);
+        temp.push_back(col3);
+        temp.push_back(col4);
+        temp.push_back(binstruction);
+        listing.push_back(temp);
     }
 }
 
 int main(){
     OpcodeTable = importOpcodeTable("opcodes.txt");
     assemblerDirective = importAssemblerDirectives("directives.txt");
-    // for(auto &i : assemblerDirective){
-    //     std::cout << i << " ";
-    // }
+    registers = importRegisters("registers.txt");
     std::string filename;
     std::cout<<"input file name to read : ";
     std::cin>>filename; 
@@ -182,4 +314,5 @@ int main(){
     firstPass(file, OpcodeTable, SymbolTable, assemblerDirective);
     printIntermediateFile("intermediate.txt");
     secondPass("intermediate.txt", OpcodeTable, SymbolTable, assemblerDirective,listing);
+    printListing(listing);
 }

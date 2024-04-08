@@ -68,3 +68,36 @@ void printIntermediateFile(const std::string& filename){
     // Close the intermediate file
     intermediateFile.close();
 }
+
+void printListing(
+    std::vector<std::vector<std::string>> &listing)
+    {
+    for (const auto& row : listing) {
+        for (size_t i = 0; i < row.size(); ++i) {
+            switch (i) {
+                case 0:
+                    std::cout << "\033[34m"; // Blue
+                    break;
+                case 1:
+                    std::cout << "\033[32m"; // Green
+                    break;
+                case 2:
+                    std::cout << "\033[33m"; // Yellow
+                    break;
+                case 3:
+                    std::cout << "\033[31m";
+                    break;
+                case 4:
+                    std::cout << "\033[32m";
+                    break;
+                default:
+                    break;
+            }
+            std::cout << std::setw(11) << row[i];
+            // Reset color
+            std::cout << "\033[0m";
+        }
+        std::cout << std::endl;
+    }
+
+}

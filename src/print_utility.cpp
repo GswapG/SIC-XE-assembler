@@ -50,12 +50,16 @@ void printIntermediateFile(const std::string& filename){
         std::string col1, col2, col3, col4;
         std::istringstream iss(line);
         iss >> col1 >> col2 >> col3 >> col4;
-
+        if(col4 == ""){
+            col4 = col3;
+            col3 = col2;
+            col2 = "";
+        }
         // Print each column with different colors
-        std::cout << "\033[0;37m" << col1 << " ";  // White color for col1
-        std::cout << "\033[0;34m" << col2 << " ";  // Blue color for col2
-        std::cout << "\033[0;32m" << col3 << " ";  // Green color for col3
-        std::cout << "\033[0;33m" << col4 << "\033[0m" << std::endl; // Yellow color for col4
+        std::cout << "\033[0;37m" << std::setw(11) << col1 << " ";  // White color for col1
+        std::cout << "\033[0;34m" << std::setw(11) << col2 << " ";  // Blue color for col2
+        std::cout << "\033[0;32m" << std::setw(11) << col3 << " ";  // Green color for col3
+        std::cout << "\033[0;33m" << std::setw(11) << col4 << "\033[0m" << std::endl; // Yellow color for col4
 
         // Reset color to default
         std::cout << "\033[0m";

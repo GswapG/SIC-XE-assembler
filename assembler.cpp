@@ -91,6 +91,18 @@ void firstPass(
     }
 
     for (const auto& instruction : instructions) {
+        // Check if the instruction has a label
+        if (!instruction[0].empty()) {
+            // Check if the label is already defined
+            if (symbolTable.find(instruction[0]) != symbolTable.end()) {
+                // Redefinition of symbol, set error flag to true
+                symbolTable[instruction[0]].second = true;
+                std::cerr << "Error: Redefinition of symbol '" << instruction[0] << "'" << std::endl;
+            } else {
+                // Add the label to the symbol table with the current location counter
+                symbolTable[instruction[0]] = std::make_pair(locationCounter, false);
+            }
+        }
         // Write location counter and instruction to the intermediate file
         intermediateFile << std::setw(6) << std::hex << locationCounter << " "; // Set width to 4 characters for hexadecimal output
         temp.push_back(std::to_string(locationCounter));
@@ -151,19 +163,6 @@ void firstPass(
         intermediateFile << instruction[2]; 
         
         intermediateFile << std::endl;
-
-        // Check if the instruction has a label
-        if (!instruction[0].empty()) {
-            // Check if the label is already defined
-            if (symbolTable.find(instruction[0]) != symbolTable.end()) {
-                // Redefinition of symbol, set error flag to true
-                symbolTable[instruction[0]].second = true;
-                std::cerr << "Error: Redefinition of symbol '" << instruction[0] << "'" << std::endl;
-            } else {
-                // Add the label to the symbol table with the current location counter
-                symbolTable[instruction[0]] = std::make_pair(locationCounter, false);
-            }
-        }
     }
 
     // Close the intermediate file
@@ -283,6 +282,7 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('0');
                 binstruction.push_back('1');
+                binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first);
             }
             else if(col4[0] == '@'){//immediate
                 binstruction.push_back('1');
@@ -290,8 +290,8 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('0');
                 binstruction.push_back('0');
-                binstruction.push_back('1');    
-
+                binstruction.push_back('1');  
+                binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first);
             }
             else if(col4[0] == '#'){
                 binstruction.push_back('0');
@@ -300,6 +300,7 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('0');
                 binstruction.push_back('1');
+                binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first);  
             }
             else{//simple
                 binstruction.push_back('1');

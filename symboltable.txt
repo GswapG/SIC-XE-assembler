@@ -1,8 +1,8 @@
 Label, Location, Error Flag
-TABLE2, 12036, false
-TABLE, 6036, false
-TOTAL, 12039, false
+TABLE2, 6040, false
+TABLE, 40, false
+TOTAL, 12040, false
 SUM, 0, false
-LOOP, 17, false
-FIRST, 3, false
-COUNT, 36, false
+LOOP, 18, false
+FIRST, 0, false
+COUNT, 37, false

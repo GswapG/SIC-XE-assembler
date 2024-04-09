@@ -4,15 +4,16 @@
      6          COMPR B
      8          COMPR A,B
      a           +LDB #TABLE2
-     e           BASE TABLE2
-     e    LOOP    ADD TABLE,X
-    11            ADD TABLE2,X
-    14            TIX COUNT
-    17            JLT LOOP
-    1a           +STA TOTAL
-    1e           RSUB 
-    21   COUNT   RESW 1
-    24   TABLE   RESW 2000
-  1794  TABLE2   RESW 2000
-  2f04   TOTAL   RESW 1
-  2f07            END FIRST
+     e           +LDA @TABLE
+    12           BASE TABLE2
+    12    LOOP    ADD TABLE,X
+    15            ADD TABLE2,X
+    18            TIX COUNT
+    1b            JLT LOOP
+    1e           +STA TOTAL
+    22           RSUB 
+    25   COUNT   RESW 1
+    28   TABLE   RESW 2000
+  1798  TABLE2   RESW 2000
+  2f08   TOTAL   RESW 1
+  2f0b            END FIRST

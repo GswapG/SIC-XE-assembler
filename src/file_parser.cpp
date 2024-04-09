@@ -184,7 +184,7 @@ std::unordered_map<std::string, int> importRegisters(const std::string& filename
 void storeListing(const std::vector<std::vector<std::string>>& listing, const std::string& filename){
     // Open the file for writing
     std::ofstream file(filename);
-    if (!file.is_open()) {
+    if (!file.is_open()){
         std::cerr << "Error: Unable to open file " << filename << " for writing." << std::endl;
         return;
     }

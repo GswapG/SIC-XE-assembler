@@ -222,6 +222,7 @@ void secondPass(
             col3 = col2;
             col2 = "";
         }
+        std::cout << "assembling instruction : " << col3 << std::endl;
         std::string opc = "";
         if(col3[0] == '+'){
             if(opcodeTable.find(col3.substr(1)) != opcodeTable.end()){
@@ -358,7 +359,16 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('0');
                 binstruction.push_back('1');
-                binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first);  
+                if(char(col4[1]) >= char('0') && char(col4[1]) <= char('9') || col4[1] == '-'){
+                    //number
+                    int val = std::stoi(col4.substr(1));
+                    binstruction += addressGenerator20bit(val);
+                }
+                else{
+                    //label
+                    binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first);
+                }
+                
             }
             else{//simple
                 binstruction.push_back('1');

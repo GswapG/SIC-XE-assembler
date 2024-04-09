@@ -13,8 +13,10 @@
     1e            JLT LOOP
     21           +STA TOTAL
     25           RSUB 
-    28   COUNT   RESW 1
-    2b   TABLE   RESW 2000
-  179b  TABLE2   RESW 2000
-  2f0b   TOTAL   RESW 1
-  2f0e            END FIRST
+    28    CHUT   WORD 8
+    2b   COUNT   RESW 1
+    2e   TABLE   RESW 2000
+  179e  TABLE2   RESW 2000
+  2f0e   TOTAL   RESW 1
+  2f11    TERI   BYTE C'EOF'
+  2f14            END FIRST

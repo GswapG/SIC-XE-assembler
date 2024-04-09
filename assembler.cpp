@@ -41,6 +41,10 @@ std::string addressGenerator20bit(int value) {
     return std::bitset<20>(value).to_string();
 }
 
+std::string wordGenerator24bit(int value) {
+    return std::bitset<24>(value).to_string();
+}
+
 std::string addressGenerator12bit(int value) {
     return std::bitset<12>(value).to_string();
 }
@@ -58,6 +62,22 @@ std::string binToHex(std::string bin){
     std::stringstream ss;
     ss << std::hex << std::setw(hexWidth) << std::setfill('0') << intValue;
     return ss.str(); // Convert stream to string and return
+}
+
+std::string stringToAsciiHex(const std::string& str) {
+    std::stringstream ss;
+
+    // Iterate over each character of the string
+    for (char c : str) {
+        // Convert the character to its ASCII value
+        int asciiValue = static_cast<int>(c);
+
+        // Convert the ASCII value to its hexadecimal representation
+        ss << std::hex << std::setw(2) << std::setfill('0') << asciiValue;
+    }
+
+    // Return the hexadecimal representation as a string
+    return ss.str();
 }
 
 std::pair<std::string, std::string> getRegister(const std::string& lastColumn) {
@@ -189,6 +209,8 @@ void secondPass(
     std::string line;
     bool base = false;
     int base_contents;
+    int word_generated;
+    bool directive = false;
     while(std::getline(inter,line)){
         std::vector<std::string> temp;
         int length = -1;
@@ -207,6 +229,7 @@ void secondPass(
                 length = opcodeTable.at(col3.substr(1)).second;
             }
             else if(assemblerDirective.find(col3.substr(1)) != assemblerDirective.end()){
+                directive = true;
                 std::cout << "found ASS : " << col3.substr(1) << std::endl;
                 if(col3.substr(1) == "BASE"){
                     base_contents = (*(symbolTable.find(col4))).second.first;
@@ -214,6 +237,13 @@ void secondPass(
                 }
                 else if(col3.substr(1) == "NOBASE"){
                     base = false;
+                }
+                else if(col3.substr(1) == "WORD"){
+                    length = 10;
+                    word_generated = std::stoi(col4);
+                }
+                else if(col3.substr(1) == "BYTE"){
+                    length = 100;
                 }
             }   
             else{
@@ -226,6 +256,7 @@ void secondPass(
                 length = opcodeTable.at(col3).second;
             }
             else if(assemblerDirective.find(col3) != assemblerDirective.end()){
+                directive = true;
                 std::cout << "found ASS : " << col3 << std::endl;
                 if(col3 == "BASE"){
                     base_contents = (*(symbolTable.find(col4))).second.first;
@@ -233,6 +264,13 @@ void secondPass(
                 }
                 else if(col3 == "NOBASE"){
                     base = false;
+                }
+                else if(col3 == "WORD"){
+                    length = 10;
+                    word_generated = std::stoi(col4);
+                }
+                else if(col3 == "BYTE"){
+                    length = 100;
                 }
             }
             else{
@@ -469,11 +507,27 @@ void secondPass(
             }
             
         }   
+        else if(length == 10){
+            binstruction = wordGenerator24bit(word_generated);
+        }
+        else if(length == 100){
+            if(col4[0] == 'X'){
+                //hex data
+                int len_of_data = (col4.length()-3);
+                binstruction = col4.substr(2,len_of_data);
+            }   
+            else if(col4[0] == 'C'){
+                //string data
+                int len_of_data = (col4.length()-3);
+                binstruction = stringToAsciiHex(col4.substr(2,len_of_data));
+            }
+        }
         temp.push_back(col1);
         temp.push_back(col2);
         temp.push_back(col3);
         temp.push_back(col4);
-        if(length != -1) temp.push_back(binToHex(binstruction));
+        if(length != -1 && length != 100) temp.push_back(binToHex(binstruction));
+        if(length == 100) temp.push_back(binstruction);
         else temp.push_back("");
         listing.push_back(temp);
     }

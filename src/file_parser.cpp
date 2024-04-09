@@ -180,3 +180,23 @@ std::unordered_map<std::string, int> importRegisters(const std::string& filename
 
     return registers;
 }
+
+void storeListing(const std::vector<std::vector<std::string>>& listing, const std::string& filename){
+    // Open the file for writing
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open file " << filename << " for writing." << std::endl;
+        return;
+    }
+
+    // Iterate over each line in the listing and write to the file
+    for (const auto& line : listing) {
+        for (const auto& word : line) {
+            file << word << " "; // Write each word separated by space
+        }
+        file << std::endl; // Write newline after each line
+    }
+
+    // Close the file
+    file.close();
+}

@@ -101,3 +101,28 @@ void printListing(
     }
 
 }
+
+void printSymbolTable(const std::unordered_map<std::string, std::pair<int, bool>>& symbolTable) {
+    std::cout << "===========SYMBOL TABLE===========" << std::endl;
+    // Print header with different colors for each column
+    std::cout << "\033[0;32m" << std::setw(7) << std::setfill(' ') << "Symbol";
+    std::cout << "\033[0;34m" << std::setw(16) << std::setfill(' ') << "Memory Location";
+    std::cout << "\033[0;35m" << std::setw(11) << std::setfill(' ') << "Error Flag";
+    std::cout << "\033[0m" << std::endl;
+
+    // Print each entry in the symbol table
+    for (const auto& entry : symbolTable) {
+        // Print symbol name in white color
+        std::cout << "\033[0;32m" << std::setw(7) << std::setfill(' ') << entry.first;
+
+        // Print decimal memory location in blue color
+        std::cout << "\033[0;34m" << std::setw(16) << std::setfill(' ') << std::hex << entry.second.first;
+
+        // Print error flag in magenta color
+        std::cout << "\033[0;35m" << std::setw(11) << std::setfill(' ') << entry.second.second;
+
+        // Reset color and print newline
+        std::cout << "\033[0m" << std::endl;
+    }
+    std::cout << "==================================" << std::endl;
+}

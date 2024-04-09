@@ -186,7 +186,7 @@ void secondPass(
 
     while(std::getline(inter,line)){
         std::vector<std::string> temp;
-        int length;
+        int length = -1;
         std::stringstream ss(line);
         std::string col1,col2,col3,col4;
         ss >> col1 >> col2 >> col3 >> col4;
@@ -269,6 +269,7 @@ void secondPass(
             }
         }
         else if(length == 1){ 
+            //onl opcode nothing else
             binstruction.push_back('0');
             binstruction.push_back('0');
         }
@@ -313,14 +314,15 @@ void secondPass(
             }
 
         }
-        else{ //length = 3 or error 
+        else if(length){ //length = 3 or error 
 
         }
         temp.push_back(col1);
         temp.push_back(col2);
         temp.push_back(col3);
         temp.push_back(col4);
-        temp.push_back(binToHex(binstruction));
+        if(length != -1) temp.push_back(binToHex(binstruction));
+        else temp.push_back("");
         listing.push_back(temp);
     }
 }
@@ -335,6 +337,7 @@ int main(){
     file = readInputFile(filename);
     printAssembly(file);
     firstPass(file, OpcodeTable, SymbolTable, assemblerDirective);
+    printSymbolTable(SymbolTable);
     printIntermediateFile("intermediate.txt");
     secondPass("intermediate.txt", OpcodeTable, SymbolTable, assemblerDirective,listing);
     printListing(listing);

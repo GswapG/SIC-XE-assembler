@@ -18,7 +18,7 @@ std::vector<std::vector<std::string>> file;
 std::vector<std::vector<std::string>> listing;
 std::unordered_map<std::string,int> registers;
 
-std::string intToBinaryString(int value) {
+std::string intToBinaryOpcode(int value) {
     // Mask to extract the last 8 bits
     const int mask = 0xFC;
 
@@ -26,11 +26,34 @@ std::string intToBinaryString(int value) {
     int last8Bits = value & mask;
 
     // Convert the last 8 bits to a binary string
-    return std::bitset<6>(last8Bits).to_string();
+    return std::bitset<8>(last8Bits).to_string().substr(0,6);
+}
+
+std::string intToBinaryRegister(int value) {
+    return std::bitset<4>(value).to_string();
 }
 
 std::string addressGenerator15bit(int value) {
     return std::bitset<15>(value).to_string();
+}
+
+std::string addressGenerator20bit(int value) {
+    return std::bitset<20>(value).to_string();
+}
+
+std::string binToHex(std::string bin){
+    size_t binaryLength = bin.length();
+
+    // Convert binary string to an integer
+    int intValue = std::bitset<32>(bin).to_ulong(); // Use 64-bit integer to accommodate long binary strings
+
+    // Calculate the width for the hexadecimal output
+    int hexWidth = (binaryLength + 3) / 4; // Calculate width for hex string, 4 binary digits correspond to 1 hex digit
+
+    // Convert integer to a hexadecimal string
+    std::stringstream ss;
+    ss << std::hex << std::setw(hexWidth) << std::setfill('0') << intValue;
+    return ss.str(); // Convert stream to string and return
 }
 
 std::pair<std::string, std::string> getRegister(const std::string& lastColumn) {
@@ -200,48 +223,47 @@ void secondPass(
         }
         int opcode = 0;
         if(opc != ""){
-            // std::cout << opc << std::endl;
+            // std::cout << opc << std::endl;   
             opcode = std::stoi(opc,nullptr,16);
-            // std::cout << opcode << std::endl;
         }
         else{
             // This is a assembler directive
         }
-        std::string binstruction = intToBinaryString(opcode);
+        std::string binstruction = intToBinaryOpcode(opcode);
         // std::cout << col3 << " " << binstruction << std::endl;
         
         // NOW WE MUST CHECK TYPE OF INSTRUCTION
         if(length == 2){ // R type
+            //opcode ko 8 bit kar diya
             binstruction.push_back('0');
             binstruction.push_back('0');
+            //finding registers involved
             std::pair<std::string,std::string> regs = getRegister(col4);
             if(regs.second == ""){
                 if(registers.find(regs.first)!=registers.end()){
-                    binstruction.push_back('0');
-                    binstruction.push_back(char(int('0') + (*(registers.find(regs.first))).second));
+                    int regno1 = (*(registers.find(regs.first))).second;
+                    binstruction += intToBinaryRegister(regno1);
                 }
                 else{
                     std::cerr << "Unable to find register : " << regs.second << std::endl;
                     return;
                 }
-                binstruction.push_back('0');
-                binstruction.push_back('0');
+                binstruction += "0000";
             }
             else{
                 if(registers.find(regs.first) != registers.end()){
-                    binstruction.push_back('0');
-                    binstruction.push_back(char(int('0') + (*(registers.find(regs.first))).second));
+                    int regno1 = (*(registers.find(regs.first))).second;
+                    binstruction += intToBinaryRegister(regno1);
                 }
                 else{
                     std::cerr << "Unable to find register : " << regs.first << std::endl;
                     return;
                 }
                 if(registers.find(regs.second)!=registers.end()){
-                    binstruction.push_back('0');
-                    binstruction.push_back(char(int('0') + (*(registers.find(regs.second))).second));
+                    int regno2 = (*(registers.find(regs.second))).second;
+                    binstruction += intToBinaryRegister(regno2);
                 }
                 else{
-                    std::cout<<"t3";
                     std::cerr << "Unable to find register : " << regs.second << std::endl;
                     return;
                 }
@@ -286,7 +308,7 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('0');
                 binstruction.push_back('1');
-                binstruction += addressGenerator15bit((*(symbolTable.find(col4))).second.first);
+                binstruction += addressGenerator20bit((*(symbolTable.find(col4))).second.first);
             }
 
         }
@@ -297,7 +319,7 @@ void secondPass(
         temp.push_back(col2);
         temp.push_back(col3);
         temp.push_back(col4);
-        temp.push_back(binstruction);
+        temp.push_back(binToHex(binstruction));
         listing.push_back(temp);
     }
 }

@@ -41,6 +41,10 @@ std::string addressGenerator20bit(int value) {
     return std::bitset<20>(value).to_string();
 }
 
+std::string addressGenerator12bit(int value) {
+    return std::bitset<12>(value).to_string();
+}
+
 std::string binToHex(std::string bin){
     size_t binaryLength = bin.length();
 
@@ -183,7 +187,8 @@ void secondPass(
         return;
     }
     std::string line;
-
+    bool base = false;
+    int base_contents;
     while(std::getline(inter,line)){
         std::vector<std::string> temp;
         int length = -1;
@@ -203,7 +208,14 @@ void secondPass(
             }
             else if(assemblerDirective.find(col3.substr(1)) != assemblerDirective.end()){
                 std::cout << "found ASS : " << col3.substr(1) << std::endl;
-            }
+                if(col3.substr(1) == "BASE"){
+                    base_contents = (*(symbolTable.find(col4))).second.first;
+                    base = true;
+                }
+                else if(col3.substr(1) == "NOBASE"){
+                    base = false;
+                }
+            }   
             else{
                 std::cerr << "Unable to find opcode : " << col3.substr(1) << std::endl;
             }
@@ -314,9 +326,78 @@ void secondPass(
             }
 
         }
-        else if(length){ //length = 3 or error 
+        else if(length == 3){ //length = 3
+            // first try PC relative
+            // then try base relative
+            if(col4[0] == '#'){
+                //immediate addressing
+                binstruction.push_back('0');
+                binstruction.push_back('1');
+                if(char(col4[1]) >= char('0') && char(col4[1]) <= char('9') || col4[1] == '-'){
+                    //number
+                    int val = std::stoi(col4.substr(1));
+                    binstruction += "0000";
+                    binstruction += addressGenerator12bit(val);
+                }
+                else{
+                    //label 
+                    //try PC relative
+                    int pc = std::stoi(col1,nullptr,16) + length;
+                    int disp = (*(symbolTable.find(col4.substr(1)))).second.first - pc;
+                    if(disp >= -2048 && disp <= 2047){
+                        binstruction += "0010";
+                        binstruction += addressGenerator12bit(disp);
+                    }
+                    else if(base){
+                        disp = (*(symbolTable.find(col4.substr(1)))).second.first - base_contents;
+                        if(disp >= 0 && disp <= 4095){
+                            binstruction += "0100";
+                            binstruction += addressGenerator12bit(disp);
+                        }
+                        else{
+                            std::cerr << "Address too large to fit in 12 bits !!" << std::endl;
+                        }
+                    }
+                    else{
+                        std::cerr << "Too large for PC relative, and NOBASE!!" << std::endl;
+                    }
+                }   
+            } 
+            else if(col4[0] == '@'){
+                //indirect
+                binstruction.push_back('1');
+                binstruction.push_back('0');
+                //label 
+                //try PC relative
+                int pc = std::stoi(col1,nullptr,16) + length;
+                int disp = (*(symbolTable.find(col4.substr(1)))).second.first - pc;
+                if(disp >= -2048 && disp <= 2047){
+                    binstruction += "0010";
+                    binstruction += addressGenerator12bit(disp);
+                }
+                else if(base){
+                    disp = (*(symbolTable.find(col4.substr(1)))).second.first - base_contents;
+                    if(disp >= 0 && disp <= 4095){
+                        binstruction += "0100";
+                        binstruction += addressGenerator12bit(disp);
+                    }
+                    else{
+                        std::cerr << "Address too large to fit in 12 bits !!" << std::endl;
+                    }
+                }
+                else{
+                    std::cerr << "Too large for PC relative, and NOBASE!!" << std::endl;
+                }
+                
+            }
+            else{
+                //simple addressing
+                binstruction.push_back('1');
+                binstruction.push_back('1');
 
-        }
+            }
+            
+        }   
         temp.push_back(col1);
         temp.push_back(col2);
         temp.push_back(col3);

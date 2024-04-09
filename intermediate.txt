@@ -1,19 +1,20 @@
      0     SUM  START 0
      0   FIRST    LDX #0
-     3            LDA #0
-     6          COMPR B
-     8          COMPR A,B
-     a           +LDB #TABLE2
-     e           +LDA @TABLE
-    12           BASE TABLE2
-    12    LOOP    ADD TABLE,X
-    15            ADD TABLE2,X
-    18            TIX COUNT
-    1b            JLT LOOP
-    1e           +STA TOTAL
-    22           RSUB 
-    25   COUNT   RESW 1
-    28   TABLE   RESW 2000
-  1798  TABLE2   RESW 2000
-  2f08   TOTAL   RESW 1
-  2f0b            END FIRST
+     3            LDA #COUNT
+     6            LDA @COUNT
+     9          COMPR B
+     b          COMPR A,B
+     d           +LDB #TABLE2
+    11           +LDA @TABLE
+    15           BASE TABLE2
+    15    LOOP    ADD TABLE,X
+    18            ADD TABLE2,X
+    1b            TIX COUNT
+    1e            JLT LOOP
+    21           +STA TOTAL
+    25           RSUB 
+    28   COUNT   RESW 1
+    2b   TABLE   RESW 2000
+  179b  TABLE2   RESW 2000
+  2f0b   TOTAL   RESW 1
+  2f0e            END FIRST

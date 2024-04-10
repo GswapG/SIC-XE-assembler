@@ -143,11 +143,13 @@ void firstPass(
         if(instruction[1] == "LTORG" || instruction[1] == "END"){
             for(auto &sym : literalTable){
                 if(!sym.second.second){
+                    std::string t = sym.first;
+                    t = "=" + t;
                     sym.second.first = locationCounter;
                     sym.second.second = true;
                     intermediateFile << std::setw(6) << std::hex << locationCounter << " ";
                     intermediateFile << "       ";
-                    intermediateFile << std::setw(7) << sym.first;
+                    intermediateFile << std::setw(7) << t;
                     intermediateFile << std::endl;
                     if(sym.first[0] == 'C'){
                         locationCounter += (sym.first.length()-3);
@@ -262,6 +264,29 @@ void secondPass(
         }
         std::cout << "assembling instruction : " << col3 << std::endl;
         std::string opc = "";
+        if(col3[0] == '='){
+            //literal data generate karna hai
+            temp.push_back(col1);
+            temp.push_back(col2);
+            temp.push_back(col3);
+            temp.push_back(col4);
+            std::string bins;
+            if(col3[1] == 'C'){
+                int len_of_data = (col3.length()-4);
+                bins = stringToAsciiHex(col3.substr(3,len_of_data));
+            }
+            else if(col3[1] == 'X'){
+                int len_of_data = (col3.length()-4);
+                bins = col3.substr(3,len_of_data);
+            }
+            else{
+                std::cerr << "Can't generate data for literal " << std::endl;
+                return;
+            }
+            temp.push_back(bins);
+            listing.push_back(temp);
+            continue;
+        }
         if(col3[0] == '+'){
             if(opcodeTable.find(col3.substr(1)) != opcodeTable.end()){
                 opc = opcodeTable.at(col3.substr(1)).first;
@@ -418,7 +443,10 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('0');
                 binstruction.push_back('1');
-                binstruction += addressGenerator20bit((*(symbolTable.find(col4))).second.first);
+                if(col4[0] == '='){
+                    binstruction += addressGenerator20bit((*(literalTable.find(col4.substr(1)))).second.first);
+                }
+                else binstruction += addressGenerator20bit((*(symbolTable.find(col4))).second.first);
                 modification.push_back(generateModification(col1));
             }
 
@@ -543,7 +571,11 @@ void secondPass(
                     else{
                         //label
                         int pc = std::stoi(col1,nullptr,16) + length;
-                        int disp = (*(symbolTable.find(col4))).second.first - pc;
+                        int disp;
+                        if(col4[0] == '='){
+                            disp = (*(literalTable.find(col4.substr(1)))).second.first - pc;
+                        }
+                        else disp = (*(symbolTable.find(col4))).second.first - pc;
                         if(disp >= -2048 && disp <= 2047){
                             binstruction += "0010";
                             binstruction += addressGenerator12bit(disp);

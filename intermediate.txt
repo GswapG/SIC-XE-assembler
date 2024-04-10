@@ -14,7 +14,7 @@
     23            STA LENGTH
     26          +JSUB WRREC
     2a              J @RETADR
-    2d         C'EOF'
+    2d        =C'EOF'
     30  RETADR   RESW 1
     33  LENGTH   RESW 1
     36  BUFFER   RESB 4096
@@ -42,5 +42,5 @@
   106e           TIXR T
   1070            JLT WLOOP
   1073           RSUB 
-  1076          X'05'
+  1076         =X'05'
   1077     END FIRST

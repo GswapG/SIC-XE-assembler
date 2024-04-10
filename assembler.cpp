@@ -563,6 +563,61 @@ void secondPass(
     }
 }
 
+void writeObjectFile(std::vector<std::vector<std::string>> listing, std::string objFile){
+    std::ofstream obj(objFile);
+    if(!obj.is_open()){
+        std::cerr << "Cannot write to file : " << objFile << std::endl;
+        return;
+    }
+
+    //====HEADER====
+    obj << "H";
+    obj << std::setw(6) << std::left << listing[0][1];
+    obj << "000000";
+    obj << std::setw(6) << std::right << std::setfill('0') << listing[listing.size()-1][0];
+    obj << std::endl;
+    //====TEXT======
+    int i = 1;
+    while(i < listing.size()-1){
+        int size = 0;
+        int j = i;
+        std::stringstream tempss;
+        while(size + listing[j][4].length()/2 <= 30 && j < listing.size()-1){
+            if(listing[j][4] == "" && listing[j+1][0] != listing[j][0]){
+                j++;
+                break;
+            }
+            else{
+                tempss << " " << listing[j][4];
+                size += listing[j][4].length()/2;
+                j++;
+            }
+        }
+        if(tempss.str() == ""){
+            i = j;
+            continue;
+        }
+        obj << "T";
+        obj << std::setw(6) << std::setfill('0') << listing[i][0];
+        obj << std::setw(2) << std::setfill('0') << std::hex << size;
+        obj << tempss.str();
+        obj << std::endl;
+        i = j;
+    }   
+    //=MODIFICATION=
+    for(auto &mod : modification){
+        obj << "M";
+        obj << mod;
+        obj << "05";
+        obj << std::endl;
+    }
+    //=====END======
+    obj << "E";
+    obj << "000000";
+    obj << std::endl;
+
+    obj.close();
+}
 int main(){
     OpcodeTable = importOpcodeTable("opcodes.txt");
     assemblerDirective = importAssemblerDirectives("directives.txt");
@@ -578,7 +633,6 @@ int main(){
     secondPass("intermediate.txt", OpcodeTable, SymbolTable, assemblerDirective,listing);
     printListing(listing);
     storeListing(listing,"listing.txt");
-    for(auto &o : modification){
-        std::cout << o << std::endl;
-    }
+    writeObjectFile(listing,"obj.txt");
+
 }

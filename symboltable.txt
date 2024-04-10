@@ -1,16 +1,14 @@
 Label, Location, Error Flag
-OUTPUT, 4214, false
 WLOOP, 4194, false
 INPUT, 4188, false
-EXIT, 4182, false
 ENDFIL, 26, false
 RDREC, 4150, false
 FIRST, 0, false
 CLOOP, 6, false
 COPY, 0, false
-EOF, 45, false
 RETADR, 48, false
 LENGTH, 51, false
 BUFFER, 54, false
 WRREC, 4189, false
 RLOOP, 4160, false
+EXIT, 4182, false

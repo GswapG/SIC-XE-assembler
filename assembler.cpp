@@ -13,6 +13,7 @@
 
 std::unordered_map<std::string, std::pair<std::string,int>> OpcodeTable;
 std::unordered_map<std::string, std::pair<int,bool>> SymbolTable;
+std::unordered_map<std::string, std::pair<int,bool>> literalTable;
 std::unordered_set<std::string> assemblerDirective;
 std::vector<std::vector<std::string>> file;
 std::vector<std::vector<std::string>> listing;
@@ -112,7 +113,6 @@ void firstPass(
     std::unordered_map<std::string, std::pair<int, bool>>& symbolTable,
     std::unordered_set<std::string> assemblerDirective)
     {
-    std::vector<std::string> temp;
     int locationCounter = 0;
     
     // Open the intermediate file for writing
@@ -122,9 +122,14 @@ void firstPass(
         return;
     }
 
-    for (const auto& instruction : instructions) {
+    for(const auto& instruction : instructions){
+        // check for literal
+        if(instruction[2][0] == '='){
+            //literal present
+            literalTable[instruction[2].substr(1)] = std::make_pair(-1, false);
+        }
         // Check if the instruction has a label
-        if (!instruction[0].empty()) {
+        if(!instruction[0].empty()){
             // Check if the label is already defined
             if (symbolTable.find(instruction[0]) != symbolTable.end()) {
                 // Redefinition of symbol, set error flag to true
@@ -135,9 +140,34 @@ void firstPass(
                 symbolTable[instruction[0]] = std::make_pair(locationCounter, false);
             }
         }
+        if(instruction[1] == "LTORG" || instruction[1] == "END"){
+            for(auto &sym : literalTable){
+                if(!sym.second.second){
+                    sym.second.first = locationCounter;
+                    sym.second.second = true;
+                    intermediateFile << std::setw(6) << std::hex << locationCounter << " ";
+                    intermediateFile << "       ";
+                    intermediateFile << std::setw(7) << sym.first;
+                    intermediateFile << std::endl;
+                    if(sym.first[0] == 'C'){
+                        locationCounter += (sym.first.length()-3);
+                    }
+                    else if(sym.first[0] == 'X'){
+                        locationCounter += (sym.first.length()-3)/2;
+                    }
+                    else{
+                        std::cerr << "Can't parse literals with non-byte values" << std::endl;
+                    }
+                }
+            }
+            if(instruction[1] == "END"){
+                intermediateFile << std::setw(6) << std::hex << locationCounter << " ";
+                intermediateFile << std::setw(7) << "END" << " " << instruction[2] << std::endl; 
+            }
+            continue;
+        }
         // Write location counter and instruction to the intermediate file
         intermediateFile << std::setw(6) << std::hex << locationCounter << " "; // Set width to 4 characters for hexadecimal output
-        temp.push_back(std::to_string(locationCounter));
         if(!instruction[0].empty()){
             intermediateFile << std::setw(7) << instruction[0];
         }
@@ -618,6 +648,7 @@ void writeObjectFile(std::vector<std::vector<std::string>> listing, std::string 
 
     obj.close();
 }
+
 int main(){
     OpcodeTable = importOpcodeTable("opcodes.txt");
     assemblerDirective = importAssemblerDirectives("directives.txt");
@@ -629,6 +660,7 @@ int main(){
     printAssembly(file);
     firstPass(file, OpcodeTable, SymbolTable, assemblerDirective);
     printSymbolTable(SymbolTable);
+    printSymbolTable(literalTable);
     printIntermediateFile("intermediate.txt");
     secondPass("intermediate.txt", OpcodeTable, SymbolTable, assemblerDirective,listing);
     printListing(listing);

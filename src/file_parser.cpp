@@ -190,10 +190,12 @@ void storeListing(const std::vector<std::vector<std::string>>& listing, const st
     }
 
     // Iterate over each line in the listing and write to the file
-    for (const auto& line : listing) {
-        for (const auto& word : line) {
-            file << word << " "; // Write each word separated by space
-        }
+    for (const auto& line : listing){
+        file << std::setw(7) << line[0];
+        file << std::setw(7) << line[1];
+        file << std::setw(7) << line[2];
+        file << std::setw(10) << line[3];
+        file << std::setw(10) << line[4];
         file << std::endl; // Write newline after each line
     }
 

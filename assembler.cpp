@@ -577,6 +577,7 @@ int main(){
     printIntermediateFile("intermediate.txt");
     secondPass("intermediate.txt", OpcodeTable, SymbolTable, assemblerDirective,listing);
     printListing(listing);
+    storeListing(listing,"listing.txt");
     for(auto &o : modification){
         std::cout << o << std::endl;
     }

@@ -23,4 +23,6 @@ void storeSymbolTable(
 
 std::unordered_map<std::string, int> importRegisters(const std::string& filename);
 
+void storeListing(const std::vector<std::vector<std::string>>& listing, const std::string& filename);
+
 #endif

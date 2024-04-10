@@ -16,6 +16,7 @@ std::unordered_map<std::string, std::pair<int,bool>> SymbolTable;
 std::unordered_set<std::string> assemblerDirective;
 std::vector<std::vector<std::string>> file;
 std::vector<std::vector<std::string>> listing;
+std::vector<std::string> modification;          
 std::unordered_map<std::string,int> registers;
 
 std::string intToBinaryOpcode(int value) {
@@ -77,6 +78,13 @@ std::string stringToAsciiHex(const std::string& str) {
     }
 
     // Return the hexadecimal representation as a string
+    return ss.str();
+}
+
+std::string generateModification(std::string &s){
+    int val = stoi(s,nullptr,16);
+    std::stringstream ss;
+    ss << std::setw(6) << std::setfill('0') << std::hex << val+1;
     return ss.str();
 }
 
@@ -342,6 +350,7 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('1');
                 binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first);
+                modification.push_back(generateModification(col1));
             }
             else if(col4[0] == '@'){//immediate
                 binstruction.push_back('1');
@@ -351,6 +360,7 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('1');  
                 binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first);
+                modification.push_back(generateModification(col1));
             }
             else if(col4[0] == '#'){
                 binstruction.push_back('0');
@@ -367,6 +377,7 @@ void secondPass(
                 else{
                     //label
                     binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first);
+                    modification.push_back(generateModification(col1));
                 }
                 
             }
@@ -378,6 +389,7 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('1');
                 binstruction += addressGenerator20bit((*(symbolTable.find(col4))).second.first);
+                modification.push_back(generateModification(col1));
             }
 
         }
@@ -426,27 +438,35 @@ void secondPass(
                 //indirect
                 binstruction.push_back('1');
                 binstruction.push_back('0');
-                //label 
-                //try PC relative
-                int pc = std::stoi(col1,nullptr,16) + length;
-                int disp = (*(symbolTable.find(col4.substr(1)))).second.first - pc;
-                if(disp >= -2048 && disp <= 2047){
-                    binstruction += "0010";
-                    binstruction += addressGenerator12bit(disp);
-                }
-                else if(base){
-                    disp = (*(symbolTable.find(col4.substr(1)))).second.first - base_contents;
-                    if(disp >= 0 && disp <= 4095){
-                        binstruction += "0100";
-                        binstruction += addressGenerator12bit(disp);
-                    }
-                    else{
-                        std::cerr << "Address too large to fit in 12 bits !!" << std::endl;
-                    }
+                if(char(col4[1]) >= char('0') && char(col4[1]) <= char('9') || col4[1] == '-'){
+                    //number
+                    int val = std::stoi(col4.substr(1));
+                    binstruction += "0000";
+                    binstruction += addressGenerator12bit(val);
                 }
                 else{
-                    std::cerr << "Too large for PC relative, and NOBASE!!" << std::endl;
-                }
+                    //label 
+                    //try PC relative
+                    int pc = std::stoi(col1,nullptr,16) + length;
+                    int disp = (*(symbolTable.find(col4.substr(1)))).second.first - pc;
+                    if(disp >= -2048 && disp <= 2047){
+                        binstruction += "0010";
+                        binstruction += addressGenerator12bit(disp);
+                    }
+                    else if(base){
+                        disp = (*(symbolTable.find(col4.substr(1)))).second.first - base_contents;
+                        if(disp >= 0 && disp <= 4095){
+                            binstruction += "0100";
+                            binstruction += addressGenerator12bit(disp);
+                        }
+                        else{
+                            std::cerr << "Address too large to fit in 12 bits !!" << std::endl;
+                        }
+                    }
+                    else{
+                        std::cerr << "Too large for PC relative, and NOBASE!!" << std::endl;
+                    }
+                }   
                 
             }
             else{
@@ -557,4 +577,7 @@ int main(){
     printIntermediateFile("intermediate.txt");
     secondPass("intermediate.txt", OpcodeTable, SymbolTable, assemblerDirective,listing);
     printListing(listing);
+    for(auto &o : modification){
+        std::cout << o << std::endl;
+    }
 }

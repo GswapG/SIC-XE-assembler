@@ -10,5 +10,5 @@ void printIntermediateFile(const std::string& filename);
 void printListing(
     std::vector<std::vector<std::string>> &listing);
 
-void printSymbolTable(const std::unordered_map<std::string, std::pair<int, bool>>& symbolTable);
+void printSymbolTable(const std::unordered_map<std::string, std::pair<std::pair<int,int>, bool>>& symbolTable);
 #endif

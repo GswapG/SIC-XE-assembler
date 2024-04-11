@@ -12,7 +12,7 @@
 #include <bitset>
 
 std::unordered_map<std::string, std::pair<std::string,int>> OpcodeTable;
-std::unordered_map<std::string, std::pair<int,bool>> SymbolTable;
+std::unordered_map<std::string, std::pair<std::pair<int,int>,bool>> SymbolTable;
 std::unordered_map<std::string, std::pair<int,bool>> literalTable;
 std::unordered_set<std::string> assemblerDirective;
 std::vector<std::vector<std::string>> file;
@@ -113,9 +113,9 @@ std::pair<int,bool> parseExpression(const std::string &s){
                 //a is a number
                 if(SymbolTable.find(b) != SymbolTable.end()){
                     if(SymbolTable[b].second){
-                        return std::make_pair(std::stoi(a) + SymbolTable[b].first,true);
+                        return std::make_pair(std::stoi(a) + SymbolTable[b].first.first,true);
                     }
-                    else return std::make_pair(std::stoi(a) + SymbolTable[b].first,false);
+                    else return std::make_pair(std::stoi(a) + SymbolTable[b].first.first,false);
                 }
                 else{
                     std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
@@ -125,9 +125,9 @@ std::pair<int,bool> parseExpression(const std::string &s){
                 //b is a number
                 if(SymbolTable.find(a) != SymbolTable.end()){
                     if(SymbolTable[a].second){
-                        return std::make_pair(std::stoi(b) + SymbolTable[a].first,true);
+                        return std::make_pair(std::stoi(b) + SymbolTable[a].first.first,true);
                     }
-                    else return std::make_pair(std::stoi(b) + SymbolTable[a].first,false);
+                    else return std::make_pair(std::stoi(b) + SymbolTable[a].first.first,false);
                 }
                 else{
                     std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
@@ -138,7 +138,7 @@ std::pair<int,bool> parseExpression(const std::string &s){
                     std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
                 }  
                 else{
-                    return std::make_pair(SymbolTable[a].first + SymbolTable[b].first, true);
+                    return std::make_pair(SymbolTable[a].first.first + SymbolTable[b].first.first, true);
                 }
             }   
             else{
@@ -150,7 +150,7 @@ std::pair<int,bool> parseExpression(const std::string &s){
                 //a is a number
                 if(SymbolTable.find(b) != SymbolTable.end()){
                     if(SymbolTable[b].second){
-                        return std::make_pair(std::stoi(a) - SymbolTable[b].first,true);
+                        return std::make_pair(std::stoi(a) - SymbolTable[b].first.first,true);
                     }
                     else{
                         std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
@@ -162,9 +162,9 @@ std::pair<int,bool> parseExpression(const std::string &s){
                 //b is a number
                 if(SymbolTable.find(a) != SymbolTable.end()){
                     if(SymbolTable[a].second){
-                        return std::make_pair(SymbolTable[a].first - std::stoi(b),true);
+                        return std::make_pair(SymbolTable[a].first.first - std::stoi(b),true);
                     }
-                    else return std::make_pair(SymbolTable[a].first - std::stoi(b),false);
+                    else return std::make_pair(SymbolTable[a].first.first - std::stoi(b),false);
                 }
                 else std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
             }
@@ -173,11 +173,11 @@ std::pair<int,bool> parseExpression(const std::string &s){
                     //b abs
                     if(SymbolTable[a].second){
                         // a abs
-                        return std::make_pair(SymbolTable[a].first - SymbolTable[b].first,true);
+                        return std::make_pair(SymbolTable[a].first.first - SymbolTable[b].first.first,true);
                     }
                     else{
                         // a rel
-                        return std::make_pair(SymbolTable[a].first - SymbolTable[b].first,false);
+                        return std::make_pair(SymbolTable[a].first.first - SymbolTable[b].first.first,false);
                     }
                 }
                 else{
@@ -188,7 +188,7 @@ std::pair<int,bool> parseExpression(const std::string &s){
                     }
                     else{
                         // a rel
-                        return std::make_pair(SymbolTable[a].first - SymbolTable[b].first,true);
+                        return std::make_pair(SymbolTable[a].first.first - SymbolTable[b].first.first,true);
                     }
                 }
             }
@@ -201,7 +201,7 @@ std::pair<int,bool> parseExpression(const std::string &s){
                 //a is a number
                 if(SymbolTable.find(b) != SymbolTable.end()){
                     if(SymbolTable[b].second){
-                        return std::make_pair(std::stoi(a)*(SymbolTable[b].first),true);
+                        return std::make_pair(std::stoi(a)*(SymbolTable[b].first.first),true);
                     }
                     else{
                         std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
@@ -219,7 +219,7 @@ std::pair<int,bool> parseExpression(const std::string &s){
                     std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
                 }  
                 else{
-                    return std::make_pair(SymbolTable[a].first * SymbolTable[b].first, true);
+                    return std::make_pair(SymbolTable[a].first.first * SymbolTable[b].first.first, true);
                 }
             }
             else{
@@ -234,7 +234,7 @@ std::pair<int,bool> parseExpression(const std::string &s){
             else if(char(b[0]) >= char('0') && char(b[0]) <= char('9') || b[0] == '-'){
                 if(SymbolTable.find(a) != SymbolTable.end()){
                     if(SymbolTable[a].second){
-                        return std::make_pair((SymbolTable[a].first)/std::stoi(b),true);
+                        return std::make_pair((SymbolTable[a].first.first)/std::stoi(b),true);
                     }
                     else{
                         std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
@@ -247,7 +247,7 @@ std::pair<int,bool> parseExpression(const std::string &s){
                     std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
                 }  
                 else{
-                    return std::make_pair(SymbolTable[a].first / SymbolTable[b].first, true);
+                    return std::make_pair(SymbolTable[a].first.first / SymbolTable[b].first.first, true);
                 }
             }
             else{
@@ -259,7 +259,7 @@ std::pair<int,bool> parseExpression(const std::string &s){
         if(char(a[0]) >= char('0') && char(a[0]) <= char('9') || a[0] == '-'){
             return std::make_pair(std::stoi(a),true);
         }
-        else return SymbolTable[a];
+        else return std::make_pair(SymbolTable[a].first.first,SymbolTable[a].second);
     }
 
 }
@@ -285,7 +285,7 @@ std::pair<std::string, std::string> getRegister(const std::string& lastColumn) {
 void firstPass(
     const std::vector<std::vector<std::string>>& instructions, 
     const std::unordered_map<std::string, std::pair<std::string, int>>& opcodeTable, 
-    std::unordered_map<std::string, std::pair<int, bool>>& symbolTable,
+    std::unordered_map<std::string, std::pair<std::pair<int,int>, bool>>& symbolTable,
     std::unordered_set<std::string> assemblerDirective)
     {
     int locationCounter = 0;
@@ -312,17 +312,17 @@ void firstPass(
                 std::cerr << "Error: Redefinition of symbol '" << instruction[0] << "'" << std::endl;
             } else {
                 // Add the label to the symbol table with the current location counter
-                symbolTable[instruction[0]] = std::make_pair(locationCounter, false);
+                symbolTable[instruction[0]] = std::make_pair(std::make_pair(locationCounter,0), false);
             }
         }
         if(instruction[1] == "EQU"){
             // check if *
             if(instruction[2] == "*"){
-                symbolTable[instruction[0]] = std::make_pair(locationCounter,false);
+                symbolTable[instruction[0]] = std::make_pair(std::make_pair(locationCounter,0),false);
             }
             else{
                 std::pair<int,bool> val = parseExpression(instruction[2]);
-                symbolTable[instruction[0]] = val;
+                symbolTable[instruction[0]] = std::make_pair(std::make_pair(val.first,0),val.second);
             }
             
             continue;
@@ -424,7 +424,7 @@ void firstPass(
 void secondPass(
     const std::string &intermediate, 
     const std::unordered_map<std::string, std::pair<std::string, int>>& opcodeTable, 
-    std::unordered_map<std::string, std::pair<int, bool>>& symbolTable,
+    std::unordered_map<std::string, std::pair<std::pair<int,int>, bool>>& symbolTable,
     std::unordered_set<std::string>& assemblerDirective,
     std::vector<std::vector<std::string>>& listing)
     {
@@ -486,7 +486,7 @@ void secondPass(
                 directive = true;
                 std::cout << "found ASS : " << col3.substr(1) << std::endl;
                 if(col3.substr(1) == "BASE"){
-                    base_contents = (*(symbolTable.find(col4))).second.first;
+                    base_contents = (*(symbolTable.find(col4))).second.first.first;
                     base = true;
                 }
                 else if(col3.substr(1) == "NOBASE"){
@@ -513,7 +513,7 @@ void secondPass(
                 directive = true;
                 std::cout << "found ASS : " << col3 << std::endl;
                 if(col3 == "BASE"){
-                    base_contents = (*(symbolTable.find(col4))).second.first;
+                    base_contents = (*(symbolTable.find(col4))).second.first.first;
                     base = true;
                 }
                 else if(col3 == "NOBASE"){
@@ -594,7 +594,7 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('0');
                 binstruction.push_back('1');
-                binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first);
+                binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first.first);
                 modification.push_back(generateModification(col1));
             }
             else if(col4[0] == '@'){//immediate
@@ -604,7 +604,7 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('0');
                 binstruction.push_back('1');  
-                binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first);
+                binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first.first);
                 modification.push_back(generateModification(col1));
             }
             else if(col4[0] == '#'){
@@ -621,7 +621,7 @@ void secondPass(
                 }
                 else{
                     //label
-                    binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first);
+                    binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first.first);
                     modification.push_back(generateModification(col1));
                 }
                 
@@ -636,7 +636,7 @@ void secondPass(
                 if(col4[0] == '='){
                     binstruction += addressGenerator20bit((*(literalTable.find(col4.substr(1)))).second.first);
                 }
-                else binstruction += addressGenerator20bit((*(symbolTable.find(col4))).second.first);
+                else binstruction += addressGenerator20bit((*(symbolTable.find(col4))).second.first.first);
                 modification.push_back(generateModification(col1));
             }
 
@@ -662,13 +662,13 @@ void secondPass(
                     //label 
                     //try PC relative
                     int pc = std::stoi(col1,nullptr,16) + length;
-                    int disp = (*(symbolTable.find(col4.substr(1)))).second.first - pc;
+                    int disp = (*(symbolTable.find(col4.substr(1)))).second.first.first - pc;
                     if(disp >= -2048 && disp <= 2047){
                         binstruction += "0010";
                         binstruction += addressGenerator12bit(disp);
                     }
                     else if(base){
-                        disp = (*(symbolTable.find(col4.substr(1)))).second.first - base_contents;
+                        disp = (*(symbolTable.find(col4.substr(1)))).second.first.first - base_contents;
                         if(disp >= 0 && disp <= 4095){
                             binstruction += "0100";
                             binstruction += addressGenerator12bit(disp);
@@ -696,13 +696,13 @@ void secondPass(
                     //label 
                     //try PC relative
                     int pc = std::stoi(col1,nullptr,16) + length;
-                    int disp = (*(symbolTable.find(col4.substr(1)))).second.first - pc;
+                    int disp = (*(symbolTable.find(col4.substr(1)))).second.first.first - pc;
                     if(disp >= -2048 && disp <= 2047){
                         binstruction += "0010";
                         binstruction += addressGenerator12bit(disp);
                     }
                     else if(base){
-                        disp = (*(symbolTable.find(col4.substr(1)))).second.first - base_contents;
+                        disp = (*(symbolTable.find(col4.substr(1)))).second.first.first - base_contents;
                         if(disp >= 0 && disp <= 4095){
                             binstruction += "0100";
                             binstruction += addressGenerator12bit(disp);
@@ -731,13 +731,13 @@ void secondPass(
                     else{
                         //label
                         int pc = std::stoi(col1,nullptr,16) + length;
-                        int disp = (*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first - pc;
+                        int disp = (*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first.first - pc;
                         if(disp >= -2048 && disp <= 2047){
                             binstruction += "1010";
                             binstruction += addressGenerator12bit(disp);
                         }
                         else if(base){
-                            disp = (*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first - base_contents;
+                            disp = (*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first.first - base_contents;
                             if(disp >= 0 && disp <= 4095){
                                 binstruction += "1100";
                                 binstruction += addressGenerator12bit(disp);
@@ -765,13 +765,13 @@ void secondPass(
                         if(col4[0] == '='){
                             disp = (*(literalTable.find(col4.substr(1)))).second.first - pc;
                         }
-                        else disp = (*(symbolTable.find(col4))).second.first - pc;
+                        else disp = (*(symbolTable.find(col4))).second.first.first - pc;
                         if(disp >= -2048 && disp <= 2047){
                             binstruction += "0010";
                             binstruction += addressGenerator12bit(disp);
                         }
                         else if(base){
-                            disp = (*(symbolTable.find(col4))).second.first - base_contents;
+                            disp = (*(symbolTable.find(col4))).second.first.first - base_contents;
                             if(disp >= 0 && disp <= 4095){
                                 binstruction += "0100";
                                 binstruction += addressGenerator12bit(disp);
@@ -882,11 +882,10 @@ int main(){
     printAssembly(file);
     firstPass(file, OpcodeTable, SymbolTable, assemblerDirective);
     printSymbolTable(SymbolTable);
-    printSymbolTable(literalTable);
+    // printSymbolTable(literalTable);
     printIntermediateFile("intermediate.txt");
     secondPass("intermediate.txt", OpcodeTable, SymbolTable, assemblerDirective,listing);
     printListing(listing);
     storeListing(listing,"listing.txt");
     writeObjectFile(listing,"obj.txt");
-
 }

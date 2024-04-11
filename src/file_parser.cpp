@@ -131,7 +131,7 @@ std::unordered_set<std::string> importAssemblerDirectives(
 void storeSymbolTable(
     const std::string& filename, 
     const std::unordered_map<std::string, 
-    std::pair<int, bool>>& symbolTable) 
+    std::pair<std::pair<int,int>, bool>>& symbolTable) 
     {
     // Open the CSV file for writing
     std::ofstream outputFile(filename);
@@ -141,11 +141,11 @@ void storeSymbolTable(
     }
 
     // Write column headers
-    outputFile << "Label, Location, Error Flag" << std::endl;
+    outputFile << "Label, Location, Error Flag, Block" << std::endl;
 
     // Write data from the symbol table
     for (const auto& entry : symbolTable) {
-        outputFile << entry.first << ", " << entry.second.first << ", " << std::boolalpha << entry.second.second << std::endl;
+        outputFile << entry.first << ", " << entry.second.first.first << ", " << std::boolalpha << entry.second.second << entry.second.first.second << std::endl;
     }
 
     // Close the CSV file

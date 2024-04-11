@@ -19,7 +19,7 @@ std::unordered_set<std::string> importAssemblerDirectives(
 
 void storeSymbolTable(
     const std::string& filename, 
-    const std::unordered_map<std::string,std::pair<int, bool>>& symbolTable);
+    const std::unordered_map<std::string,std::pair<std::pair<int,int>, bool>>& symbolTable);
 
 std::unordered_map<std::string, int> importRegisters(const std::string& filename);
 

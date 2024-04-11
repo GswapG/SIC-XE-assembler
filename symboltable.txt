@@ -1,17 +1,17 @@
-Label, Location, Error Flag
-WLOOP, 4194, false
-EXIT, 4182, false
-WRREC, 4189, false
-RLOOP, 4160, false
-ENDFIL, 26, false
-RDREC, 4150, false
-FIRST, 0, false
-LMAO, 10, true
-CLOOP, 6, false
-INPUT, 4188, false
-BUFEND, 4150, false
-COPY, 0, false
-RETADR, 48, false
-MAXLEN, 4096, true
-LENGTH, 51, false
-BUFFER, 54, false
+Label, Location, Error Flag, Block
+WLOOP, 4194, false0
+EXIT, 4182, false0
+WRREC, 4189, false0
+RLOOP, 4160, false0
+ENDFIL, 26, false0
+RDREC, 4150, false0
+FIRST, 0, false0
+LMAO, 10, true0
+CLOOP, 6, false0
+INPUT, 4188, false0
+BUFEND, 4150, false0
+COPY, 0, false0
+RETADR, 48, false0
+MAXLEN, 4096, true0
+LENGTH, 51, false0
+BUFFER, 54, false0

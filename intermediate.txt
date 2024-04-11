@@ -21,7 +21,7 @@
   1036   RDREC  CLEAR X
   1038          CLEAR A
   103a          CLEAR S
-  103c           +LDT #4096
+  103c           +LDT #MAXLEN
   1040   RLOOP     TD INPUT
   1043            JEQ RLOOP
   1046             RD INPUT

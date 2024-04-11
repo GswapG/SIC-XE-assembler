@@ -89,6 +89,181 @@ std::string generateModification(std::string &s){
     return ss.str();
 }
 
+std::pair<int,bool> parseExpression(const std::string &s){
+    std::string a = "", b = "";
+    int j = 0;
+    bool found = false;
+    char operand;
+    for(int i = 0;i<s.size();i++){
+        char c = s[i];
+        if(c == '+' || c == '-' || c == '/' || c == '*'){
+            j = i+1;
+            found = true;
+            operand = c;
+            break;
+        }
+        else{
+            a.push_back(c);
+        }
+    }
+    if(found){
+        b = s.substr(j);
+        if(operand == '+'){
+            if(char(a[0]) >= char('0') && char(a[0]) <= char('9') || a[0] == '-'){
+                //a is a number
+                if(SymbolTable.find(b) != SymbolTable.end()){
+                    if(SymbolTable[b].second){
+                        return std::make_pair(std::stoi(a) + SymbolTable[b].first,true);
+                    }
+                    else return std::make_pair(std::stoi(a) + SymbolTable[b].first,false);
+                }
+                else{
+                    std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+                }
+            }
+            else if(char(b[0]) >= char('0') && char(b[0]) <= char('9') || b[0] == '-'){
+                //b is a number
+                if(SymbolTable.find(a) != SymbolTable.end()){
+                    if(SymbolTable[a].second){
+                        return std::make_pair(std::stoi(b) + SymbolTable[a].first,true);
+                    }
+                    else return std::make_pair(std::stoi(b) + SymbolTable[a].first,false);
+                }
+                else{
+                    std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+                }
+            }
+            else if(SymbolTable.find(a) != SymbolTable.end() && SymbolTable.find(b) != SymbolTable.end()){
+                if((!SymbolTable[a].second) || (!SymbolTable[b].second)){
+                    std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                }  
+                else{
+                    return std::make_pair(SymbolTable[a].first + SymbolTable[b].first, true);
+                }
+            }   
+            else{
+                std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+            }
+        }
+        else if(operand == '-'){
+            if(char(a[0]) >= char('0') && char(a[0]) <= char('9') || a[0] == '-'){
+                //a is a number
+                if(SymbolTable.find(b) != SymbolTable.end()){
+                    if(SymbolTable[b].second){
+                        return std::make_pair(std::stoi(a) - SymbolTable[b].first,true);
+                    }
+                    else{
+                        std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                    }
+                }
+                else std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+            }
+            else if(char(b[0]) >= char('0') && char(b[0]) <= char('9') || b[0] == '-'){
+                //b is a number
+                if(SymbolTable.find(a) != SymbolTable.end()){
+                    if(SymbolTable[a].second){
+                        return std::make_pair(SymbolTable[a].first - std::stoi(b),true);
+                    }
+                    else return std::make_pair(SymbolTable[a].first - std::stoi(b),false);
+                }
+                else std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+            }
+            else if(SymbolTable.find(a) != SymbolTable.end() && SymbolTable.find(b) != SymbolTable.end()){
+                if(SymbolTable[b].second){
+                    //b abs
+                    if(SymbolTable[a].second){
+                        // a abs
+                        return std::make_pair(SymbolTable[a].first - SymbolTable[b].first,true);
+                    }
+                    else{
+                        // a rel
+                        return std::make_pair(SymbolTable[a].first - SymbolTable[b].first,false);
+                    }
+                }
+                else{
+                    //b rel
+                    if(SymbolTable[a].second){
+                        // a abs
+                        std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                    }
+                    else{
+                        // a rel
+                        return std::make_pair(SymbolTable[a].first - SymbolTable[b].first,true);
+                    }
+                }
+            }
+            else{
+                std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+            }
+        }
+        else if(operand == '*'){
+            if(char(a[0]) >= char('0') && char(a[0]) <= char('9') || a[0] == '-'){
+                //a is a number
+                if(SymbolTable.find(b) != SymbolTable.end()){
+                    if(SymbolTable[b].second){
+                        return std::make_pair(std::stoi(a)*(SymbolTable[b].first),true);
+                    }
+                    else{
+                        std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                    }
+                }
+                else{
+                    std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+                }
+            }
+            else if(char(b[0]) >= char('0') && char(b[0]) <= char('9') || b[0] == '-'){
+                std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+            }
+            else if(SymbolTable.find(a) != SymbolTable.end() && SymbolTable.find(b) != SymbolTable.end()){
+                if((!SymbolTable[a].second) || (!SymbolTable[b].second)){
+                    std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                }  
+                else{
+                    return std::make_pair(SymbolTable[a].first * SymbolTable[b].first, true);
+                }
+            }
+            else{
+                std::cerr<<"ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" <<std::endl;
+            }
+        }
+        else if(operand == '/'){
+            if(char(a[0]) >= char('0') && char(a[0]) <= char('9') || a[0] == '-'){
+                //a is a number
+                std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+            }
+            else if(char(b[0]) >= char('0') && char(b[0]) <= char('9') || b[0] == '-'){
+                if(SymbolTable.find(a) != SymbolTable.end()){
+                    if(SymbolTable[a].second){
+                        return std::make_pair((SymbolTable[a].first)/std::stoi(b),true);
+                    }
+                    else{
+                        std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                    }
+                }
+                else std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+            }
+            else if(SymbolTable.find(a) != SymbolTable.end() && SymbolTable.find(b) != SymbolTable.end()){
+                if((!SymbolTable[a].second) || (!SymbolTable[b].second)){
+                    std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                }  
+                else{
+                    return std::make_pair(SymbolTable[a].first / SymbolTable[b].first, true);
+                }
+            }
+            else{
+                std::cerr<<"ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" <<std::endl;
+            }
+        }
+    }
+    else{
+        if(char(a[0]) >= char('0') && char(a[0]) <= char('9') || a[0] == '-'){
+            return std::make_pair(std::stoi(a),true);
+        }
+        else return SymbolTable[a];
+    }
+
+}
+
 std::pair<std::string, std::string> getRegister(const std::string& lastColumn) {
     // Remove whitespace from the last column
     std::string trimmedColumn;
@@ -133,12 +308,17 @@ void firstPass(
             // Check if the label is already defined
             if (symbolTable.find(instruction[0]) != symbolTable.end()) {
                 // Redefinition of symbol, set error flag to true
-                symbolTable[instruction[0]].second = true;
+                // symbolTable[instruction[0]].second = true;
                 std::cerr << "Error: Redefinition of symbol '" << instruction[0] << "'" << std::endl;
             } else {
                 // Add the label to the symbol table with the current location counter
                 symbolTable[instruction[0]] = std::make_pair(locationCounter, false);
             }
+        }
+        if(instruction[1] == "EQU"){
+            std::pair<int,bool> val = parseExpression(instruction[2]);
+            symbolTable[instruction[0]] = val;
+            continue;
         }
         if(instruction[1] == "LTORG" || instruction[1] == "END"){
             for(auto &sym : literalTable){

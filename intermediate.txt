@@ -39,6 +39,6 @@
     5e           TIXR T 0
     60            JLT WLOOP 0
     63           RSUB  0
-     7        =C'EOF'
-     a         =X'05'
+     7        =C'EOF' 1
+     a         =X'05' 1
      b     END FIRST

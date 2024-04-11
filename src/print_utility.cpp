@@ -81,6 +81,7 @@ void printListing(
     std::vector<std::vector<std::string>> &listing)
     {
     for (const auto& row : listing) {
+        // std::cout << row.size() << std::endl;
         for (size_t i = 0; i < row.size(); ++i) {
             switch (i) {
                 case 0:
@@ -98,6 +99,9 @@ void printListing(
                 case 4:
                     std::cout << "\033[32m";
                     break;
+                case 5:
+                    std::cout << "\033[35m";
+                    break;
                 default:
                     break;
             }
@@ -111,12 +115,12 @@ void printListing(
 }
 
 void printSymbolTable(const std::unordered_map<std::string, std::pair<std::pair<int,int>, bool>>& symbolTable) {
-    std::cout << "===========SYMBOL TABLE===========" << std::endl;
+    std::cout << "===========SYMBOL TABLE======================" << std::endl;
     // Print header with different colors for each column
     std::cout << "\033[0;32m" << std::setw(7) << std::setfill(' ') << "Symbol";
-    std::cout << "\033[0;34m" << std::setw(16) << std::setfill(' ') << "Memory Location";
-    std::cout << "\033[0;35m" << std::setw(11) << std::setfill(' ') << "Error Flag";
-    std::cout << "\033[0;35m" << std::setw(11) << std::setfill(' ') << "Block";
+    std::cout << "\033[0;34m" << std::setw(16) << std::setfill(' ') << "Value";
+    std::cout << "\033[0;35m" << std::setw(11) << std::setfill(' ') << "A/R";
+    std::cout << "\033[0;37m" << std::setw(11) << std::setfill(' ') << "Block";
     std::cout << "\033[0m" << std::endl;
 
     // Print each entry in the symbol table
@@ -135,5 +139,5 @@ void printSymbolTable(const std::unordered_map<std::string, std::pair<std::pair<
 
         std::cout << "\033[0m" << std::endl;
     }
-    std::cout << "==================================" << std::endl;
+    std::cout << "=============================================" << std::endl;
 }

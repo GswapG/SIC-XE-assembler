@@ -21,6 +21,7 @@ std::vector<std::string> modification;
 std::unordered_map<std::string,int> registers;
 std::unordered_map<std::string, std::vector<int>> blkTable;
 std::vector<std::string> blocks_ka_vector, literals_ka_vector;
+std::ofstream err("error.txt");
 
 std::string intToBinaryOpcode(int value) {
     // Mask to extract the last 8 bits
@@ -120,7 +121,7 @@ std::pair<int,bool> parseExpression(const std::string &s){
                     else return std::make_pair(std::stoi(a) + SymbolTable[b].first.first,false);
                 }
                 else{
-                    std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+                    err << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
                 }
             }
             else if(char(b[0]) >= char('0') && char(b[0]) <= char('9') || b[0] == '-'){
@@ -132,19 +133,19 @@ std::pair<int,bool> parseExpression(const std::string &s){
                     else return std::make_pair(std::stoi(b) + SymbolTable[a].first.first,false);
                 }
                 else{
-                    std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+                    err << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
                 }
             }
             else if(SymbolTable.find(a) != SymbolTable.end() && SymbolTable.find(b) != SymbolTable.end()){
                 if((!SymbolTable[a].second) || (!SymbolTable[b].second)){
-                    std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                    err << "WRONG RELATIVE EXPRESSION" << std::endl;
                 }  
                 else{
                     return std::make_pair(SymbolTable[a].first.first + SymbolTable[b].first.first, true);
                 }
             }   
             else{
-                std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+                err << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
             }
         }
         else if(operand == '-'){
@@ -155,10 +156,10 @@ std::pair<int,bool> parseExpression(const std::string &s){
                         return std::make_pair(std::stoi(a) - SymbolTable[b].first.first,true);
                     }
                     else{
-                        std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                        err << "WRONG RELATIVE EXPRESSION" << std::endl;
                     }
                 }
-                else std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+                else err << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
             }
             else if(char(b[0]) >= char('0') && char(b[0]) <= char('9') || b[0] == '-'){
                 //b is a number
@@ -168,7 +169,7 @@ std::pair<int,bool> parseExpression(const std::string &s){
                     }
                     else return std::make_pair(SymbolTable[a].first.first - std::stoi(b),false);
                 }
-                else std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+                else err << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
             }
             else if(SymbolTable.find(a) != SymbolTable.end() && SymbolTable.find(b) != SymbolTable.end()){
                 if(SymbolTable[b].second){
@@ -186,7 +187,7 @@ std::pair<int,bool> parseExpression(const std::string &s){
                     //b rel
                     if(SymbolTable[a].second){
                         // a abs
-                        std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                        err << "WRONG RELATIVE EXPRESSION" << std::endl;
                     }
                     else{
                         // a rel
@@ -195,7 +196,7 @@ std::pair<int,bool> parseExpression(const std::string &s){
                 }
             }
             else{
-                std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+                err << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
             }
         }
         else if(operand == '*'){
@@ -206,32 +207,32 @@ std::pair<int,bool> parseExpression(const std::string &s){
                         return std::make_pair(std::stoi(a)*(SymbolTable[b].first.first),true);
                     }
                     else{
-                        std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                        err << "WRONG RELATIVE EXPRESSION" << std::endl;
                     }
                 }
                 else{
-                    std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+                    err << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
                 }
             }
             else if(char(b[0]) >= char('0') && char(b[0]) <= char('9') || b[0] == '-'){
-                std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                err << "WRONG RELATIVE EXPRESSION" << std::endl;
             }
             else if(SymbolTable.find(a) != SymbolTable.end() && SymbolTable.find(b) != SymbolTable.end()){
                 if((!SymbolTable[a].second) || (!SymbolTable[b].second)){
-                    std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                    err << "WRONG RELATIVE EXPRESSION" << std::endl;
                 }  
                 else{
                     return std::make_pair(SymbolTable[a].first.first * SymbolTable[b].first.first, true);
                 }
             }
             else{
-                std::cerr<<"ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" <<std::endl;
+                err<<"ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" <<std::endl;
             }
         }
         else if(operand == '/'){
             if(char(a[0]) >= char('0') && char(a[0]) <= char('9') || a[0] == '-'){
                 //a is a number
-                std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                err << "WRONG RELATIVE EXPRESSION" << std::endl;
             }
             else if(char(b[0]) >= char('0') && char(b[0]) <= char('9') || b[0] == '-'){
                 if(SymbolTable.find(a) != SymbolTable.end()){
@@ -239,21 +240,21 @@ std::pair<int,bool> parseExpression(const std::string &s){
                         return std::make_pair((SymbolTable[a].first.first)/std::stoi(b),true);
                     }
                     else{
-                        std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                        err << "WRONG RELATIVE EXPRESSION" << std::endl;
                     }
                 }
-                else std::cerr << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
+                else err << "ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" << std::endl;
             }
             else if(SymbolTable.find(a) != SymbolTable.end() && SymbolTable.find(b) != SymbolTable.end()){
                 if((!SymbolTable[a].second) || (!SymbolTable[b].second)){
-                    std::cerr << "WRONG RELATIVE EXPRESSION" << std::endl;
+                    err << "WRONG RELATIVE EXPRESSION" << std::endl;
                 }  
                 else{
                     return std::make_pair(SymbolTable[a].first.first / SymbolTable[b].first.first, true);
                 }
             }
             else{
-                std::cerr<<"ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" <<std::endl;
+                err<<"ERROR IN PARSING EXPRESSION, SYMBOL NOT DEFINED EARLIER" <<std::endl;
             }
         }
     }
@@ -297,7 +298,7 @@ void firstPass(
     // Open the intermediate file for writing
     std::ofstream intermediateFile("intermediate.txt");
     if (!intermediateFile.is_open()) {
-        std::cerr << "Error: Unable to create intermediate file" << std::endl;
+        err << "Error: Unable to create intermediate file" << std::endl;
         return;
     }
 
@@ -335,7 +336,7 @@ void firstPass(
             if (symbolTable.find(instruction[0]) != symbolTable.end()) {
                 // Redefinition of symbol, set error flag to true
                 // symbolTable[instruction[0]].second = true;
-                std::cerr << "Error: Redefinition of symbol '" << instruction[0] << "'" << std::endl;
+                err << "Error: Redefinition of symbol '" << instruction[0] << "'" << std::endl;
             } else {
                 // Add the label to the symbol table with the current location counter
                 symbolTable[instruction[0]] = std::make_pair(std::make_pair(locationCounter,blkTable[blk][0]), false);
@@ -364,6 +365,8 @@ void firstPass(
                     intermediateFile << std::setw(6) << std::hex << locationCounter << " ";
                     intermediateFile << "       ";
                     intermediateFile << std::setw(7) << t;
+                    intermediateFile << " ";
+                    intermediateFile << blkTable[blk][0];
                     intermediateFile << std::endl;
                     if(sym[1] == 'C'){
                         locationCounter += (sym.length()-4);
@@ -372,13 +375,14 @@ void firstPass(
                         locationCounter += (sym.length()-4)/2;
                     }
                     else{
-                        std::cerr << "Can't parse literals with non-byte values" << std::endl;
+                        err << "Can't parse literals with non-byte values" << std::endl;
                     }
                 }
             }
             if(instruction[1] == "END"){
                 intermediateFile << std::setw(6) << std::hex << locationCounter << " ";
                 intermediateFile << std::setw(7) << "END" << " " << instruction[2] << std::endl; 
+                blkTable[blk][2] = locationCounter;
             }
             continue;
         }
@@ -399,7 +403,7 @@ void firstPass(
                 locationCounter += 4;
             }
             else{
-                std::cerr << "Error: Opcode not found for mnemonic '" << instruction[1] << "'" << std::endl;
+                err << "Error: Opcode not found for mnemonic '" << instruction[1] << "'" << std::endl;
             }
                 
             
@@ -434,7 +438,7 @@ void firstPass(
                 }
             }
             else {
-                std::cerr << "Error: Opcode not found for mnemonic '" << instruction[1] << "'" << std::endl;
+                err << "Error: Opcode not found for mnemonic '" << instruction[1] << "'" << std::endl;
             }
         }
         intermediateFile << " ";
@@ -465,7 +469,7 @@ void secondPass(
     {
     std::ifstream inter(intermediate);
     if(!inter.is_open()){
-        std::cerr << "Error: Unable to open intermediate file" << std::endl;
+        err << "Error: Unable to open intermediate file" << std::endl;
         return;
     }
     std::string line;
@@ -492,7 +496,6 @@ void secondPass(
             col3 = col2;
             col2 = "";
         }
-        std::cout << "assembling instruction : " << col3 << std::endl;
         std::string opc = "";
         if(col3[0] == '='){
             //literal data generate karna hai
@@ -513,10 +516,11 @@ void secondPass(
                 bins = col1;
             }
             else{
-                std::cerr << "Can't generate data for literal " << std::endl;
+                err << "Can't generate data for literal " << std::endl;
                 return;
             }
             temp.push_back(bins);
+            temp.push_back(col5);
             listing.push_back(temp);
             continue;
         }
@@ -527,7 +531,6 @@ void secondPass(
             }
             else if(assemblerDirective.find(col3.substr(1)) != assemblerDirective.end()){
                 directive = true;
-                std::cout << "found ASS : " << col3.substr(1) << std::endl;
                 if(col3.substr(1) == "BASE"){
                     base_contents = (*(symbolTable.find(col4))).second.first.first + blkTable[blocks_ka_vector[std::stoi(col5)]][1];
                     base = true;
@@ -544,7 +547,7 @@ void secondPass(
                 }
             }   
             else{
-                std::cerr << "Unable to find opcode : " << col3.substr(1) << std::endl;
+                err << "Unable to find opcode : " << col3.substr(1) << std::endl;
             }
         }
         else{
@@ -554,7 +557,6 @@ void secondPass(
             }
             else if(assemblerDirective.find(col3) != assemblerDirective.end()){
                 directive = true;
-                std::cout << "found ASS : " << col3 << std::endl;
                 if(col3 == "BASE"){
                     base_contents = (*(symbolTable.find(col4))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4))).second.first.second]][1];
                     base = true;
@@ -571,7 +573,7 @@ void secondPass(
                 }
             }
             else{
-                std::cerr << "Unable to find opcode : " << col3 << std::endl;
+                err << "Unable to find opcode : " << col3 << std::endl;
             }
         }
         int opcode = 0;
@@ -598,7 +600,7 @@ void secondPass(
                     binstruction += intToBinaryRegister(regno1);
                 }
                 else{
-                    std::cerr << "Unable to find register : " << regs.second << std::endl;
+                    err << "Unable to find register : " << regs.second << std::endl;
                     return;
                 }
                 binstruction += "0000";
@@ -609,7 +611,7 @@ void secondPass(
                     binstruction += intToBinaryRegister(regno1);
                 }
                 else{
-                    std::cerr << "Unable to find register : " << regs.first << std::endl;
+                    err << "Unable to find register : " << regs.first << std::endl;
                     return;
                 }
                 if(registers.find(regs.second)!=registers.end()){
@@ -617,7 +619,7 @@ void secondPass(
                     binstruction += intToBinaryRegister(regno2);
                 }
                 else{
-                    std::cerr << "Unable to find register : " << regs.second << std::endl;
+                    err << "Unable to find register : " << regs.second << std::endl;
                     return;
                 }
             }
@@ -665,7 +667,7 @@ void secondPass(
                 else{
                     //label
                     binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4.substr(1)))).second.first.second]][1]);
-                    modification.push_back(generateModification(col1));
+                    if(!(*(symbolTable.find(col4.substr(1)))).second.second) modification.push_back(generateModification(col1));
                 }
                 
             }
@@ -717,11 +719,11 @@ void secondPass(
                             binstruction += addressGenerator12bit(disp);
                         }
                         else{
-                            std::cerr << "Address too large to fit in 12 bits !!" << std::endl;
+                            err << "Address too large to fit in 12 bits !!" << std::endl;
                         }
                     }
                     else{
-                        std::cerr << "Too large for PC relative, and NOBASE!!" << std::endl;
+                        err << "Too large for PC relative, and NOBASE!!" << std::endl;
                     }
                 }   
             } 
@@ -751,11 +753,11 @@ void secondPass(
                             binstruction += addressGenerator12bit(disp);
                         }
                         else{
-                            std::cerr << "Address too large to fit in 12 bits !!" << std::endl;
+                            err << "Address too large to fit in 12 bits !!" << std::endl;
                         }
                     }
                     else{
-                        std::cerr << "Too large for PC relative, and NOBASE!!" << std::endl;
+                        err << "Too large for PC relative, and NOBASE!!" << std::endl;
                     }
                 }   
                 
@@ -786,11 +788,11 @@ void secondPass(
                                 binstruction += addressGenerator12bit(disp);
                             }
                             else{
-                                std::cerr << "Address too large to fit in 12 bits !!" << std::endl;
+                                err << "Address too large to fit in 12 bits !!" << std::endl;
                             }
                         }
                         else{
-                            std::cerr << "Too large for PC relative, and NOBASE!!" << std::endl;
+                            err << "Too large for PC relative, and NOBASE!!" << std::endl;
                         }
                     }
                 }
@@ -823,11 +825,11 @@ void secondPass(
                                 binstruction += addressGenerator12bit(disp);
                             }
                             else{
-                                std::cerr << "Address too large to fit in 12 bits !!" << std::endl;
+                                err << "Address too large to fit in 12 bits !!" << std::endl;
                             }
                         }
                         else{
-                            std::cerr << "Too large for PC relative, and NOBASE!!" << std::endl;
+                            err << "Too large for PC relative, and NOBASE!!" << std::endl;
                         }
                     }
 
@@ -855,8 +857,9 @@ void secondPass(
         temp.push_back(col3);
         temp.push_back(col4);
         if(length != -1 && length != 100) temp.push_back(binToHex(binstruction));
-        if(length == 100) temp.push_back(binstruction);
+        else if(length == 100) temp.push_back(binstruction);
         else temp.push_back("");
+        temp.push_back(col5);
         listing.push_back(temp);
     }
 }
@@ -864,31 +867,46 @@ void secondPass(
 void writeObjectFile(std::vector<std::vector<std::string>> listing, std::string objFile){
     std::ofstream obj(objFile);
     if(!obj.is_open()){
-        std::cerr << "Cannot write to file : " << objFile << std::endl;
+        err << "Cannot write to file : " << objFile << std::endl;
         return;
     }
-
+    int sz = 0;
+    for(auto &i : blocks_ka_vector){
+        sz += blkTable[i][2];
+    }
     //====HEADER====
     obj << "H";
     obj << std::setw(6) << std::left << listing[0][1];
     obj << "000000";
-    obj << std::setw(6) << std::right << std::setfill('0') << listing[listing.size()-1][0];
+    obj << std::setw(6) << std::right << std::setfill('0') << std::hex << sz;
     obj << std::endl;
     //====TEXT======
     int i = 1;
+    bool nw = true;
     while(i < listing.size()-1){
         int size = 0;
         int j = i;
         std::stringstream tempss;
-        while(size + listing[j][4].length()/2 <= 30 && j < listing.size()-1){
+        while((size + listing[j][4].length()/2 <= 30 && j < listing.size()-1)){
             if(listing[j][4] == "" && listing[j+1][0] != listing[j][0]){
                 j++;
                 break;
             }
             else{
-                tempss << " " << listing[j][4];
-                size += listing[j][4].length()/2;
-                j++;
+                if(!nw && listing[j-1][2][0] == '+' && std::stoi(listing[j-1][0],nullptr,16) + 4 != std::stoi(listing[j][0],nullptr,16) && listing[j-1][2][0] != '='){
+                    nw = true;
+                    break;
+                }
+                else if(!nw && listing[j-1][2][0] != '+' && std::stoi(listing[j-1][0],nullptr,16) + OpcodeTable[listing[j-1][2]].second != std::stoi(listing[j][0],nullptr,16) && listing[j-1][2][0] != '='){
+                    nw = true;
+                    break;
+                }
+                else{
+                    nw = false;
+                    tempss << " " << listing[j][4];
+                    size += listing[j][4].length()/2;
+                    j++;
+                }
             }
         }
         if(tempss.str() == ""){
@@ -896,7 +914,7 @@ void writeObjectFile(std::vector<std::vector<std::string>> listing, std::string 
             continue;
         }
         obj << "T";
-        obj << std::setw(6) << std::setfill('0') << listing[i][0];
+        obj << std::setw(6) << std::setfill('0') << std::hex<< std::stoi(listing[i][0],nullptr,16) + blkTable[blocks_ka_vector[std::stoi(listing[i][5])]][1];
         obj << std::setw(2) << std::setfill('0') << std::hex << size;
         obj << tempss.str();
         obj << std::endl;
@@ -926,16 +944,15 @@ int main(){
     std::cout<<"input file name to read : ";
     std::cin>>filename; 
     file = readInputFile(filename);
-    printAssembly(file);
+    // printAssembly(file);
     firstPass(file, OpcodeTable, SymbolTable, assemblerDirective);
     printSymbolTable(SymbolTable);
-    printSymbolTable(literalTable);
+    std::cout<<"========================== INTERMEDIATE FILE ====================================== \n";
     printIntermediateFile("intermediate.txt");
     secondPass("intermediate.txt", OpcodeTable, SymbolTable, assemblerDirective,listing);
+    std::cout <<"========================== LISTING FILE ====================================== \n";
     printListing(listing);
     storeListing(listing,"listing.txt");
     writeObjectFile(listing,"obj.txt");
-    for(auto &i : blkTable){
-        std::cout << i.first << " " << i.second[0] << " " <<i.second[1] << " " <<i.second[2] << std::endl;
-    }
+    err.close();
 }

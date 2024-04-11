@@ -316,8 +316,15 @@ void firstPass(
             }
         }
         if(instruction[1] == "EQU"){
-            std::pair<int,bool> val = parseExpression(instruction[2]);
-            symbolTable[instruction[0]] = val;
+            // check if *
+            if(instruction[2] == "*"){
+                symbolTable[instruction[0]] = std::make_pair(locationCounter,false);
+            }
+            else{
+                std::pair<int,bool> val = parseExpression(instruction[2]);
+                symbolTable[instruction[0]] = val;
+            }
+            
             continue;
         }
         if(instruction[1] == "LTORG" || instruction[1] == "END"){
@@ -458,6 +465,9 @@ void secondPass(
             else if(col3[1] == 'X'){
                 int len_of_data = (col3.length()-4);
                 bins = col3.substr(3,len_of_data);
+            }
+            else if(col3[1] == '*'){
+                bins = col1;
             }
             else{
                 std::cerr << "Can't generate data for literal " << std::endl;

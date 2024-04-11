@@ -9,7 +9,7 @@ FIRST, 0, false
 LMAO, 10, true
 CLOOP, 6, false
 INPUT, 4188, false
-BUFEND, 2048, true
+BUFEND, 4150, false
 COPY, 0, false
 RETADR, 48, false
 MAXLEN, 4096, true

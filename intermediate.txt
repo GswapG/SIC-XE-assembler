@@ -1,46 +1,44 @@
-     0    COPY  START 0
-     0   FIRST    STL RETADR
-     3            LDB #LENGTH
-     6           BASE LENGTH
-     6   CLOOP  +JSUB RDREC
-     a            LDA LENGTH
-     d           COMP #0
-    10            JEQ ENDFIL
-    13          +JSUB WRREC
-    17              J CLOOP
-    1a  ENDFIL    LDA =C'EOF'
-    1d            STA BUFFER
-    20            LDA #3
-    23            STA LENGTH
-    26          +JSUB WRREC
-    2a              J @RETADR
-    2d        =C'EOF'
-    30  RETADR   RESW 1
-    33  LENGTH   RESW 1
-    36  BUFFER   RESB 4096
-  1036   RDREC  CLEAR X
-  1038          CLEAR A
-  103a          CLEAR S
-  103c           +LDT #MAXLEN
-  1040   RLOOP     TD INPUT
-  1043            JEQ RLOOP
-  1046             RD INPUT
-  1049          COMPR A,S
-  104b            JEQ EXIT
-  104e           STCH BUFFER,X
-  1051           TIXR T
-  1053            JLT RLOOP
-  1056    EXIT    STX LENGTH
-  1059           RSUB 
-  105c   INPUT   BYTE X'F1'
-  105d   WRREC  CLEAR X
-  105f            LDT LENGTH
-  1062   WLOOP     TD =X'05'
-  1065            JEQ WLOOP
-  1068           LDCH BUFFER,X
-  106b             WD =X'05'
-  106e           TIXR T
-  1070            JLT WLOOP
-  1073           RSUB 
-  1076         =X'05'
-  1077     END FIRST
+     0    COPY  START 0 0
+     0   FIRST    STL RETADR 0
+     3   CLOOP   JSUB RDREC 0
+     6            LDA LENGTH 0
+     9           COMP #0 0
+     c            JEQ ENDFIL 0
+     f           JSUB WRREC 0
+    12              J CLOOP 0
+    15  ENDFIL    LDA =C'EOF' 0
+    18            STA BUFFER 0
+    1b            LDA #3 0
+    1e            STA LENGTH 0
+    21           JSUB WRREC 0
+    24              J @RETADR 0
+     0  RETADR   RESW 1 1
+     3  LENGTH   RESW 1 1
+     0  BUFFER   RESB 4096 2
+    27   RDREC  CLEAR X 0
+    29          CLEAR A 0
+    2b          CLEAR S 0
+    2d           +LDT #MAXLEN 0
+    31   RLOOP     TD INPUT 0
+    34            JEQ RLOOP 0
+    37             RD INPUT 0
+    3a          COMPR A,S 0
+    3c            JEQ EXIT 0
+    3f           STCH BUFFER,X 0
+    42           TIXR T 0
+    44            JLT RLOOP 0
+    47    EXIT    STX LENGTH 0
+    4a           RSUB  0
+     6   INPUT   BYTE X'F1' 1
+    4d   WRREC  CLEAR X 0
+    4f            LDT LENGTH 0
+    52   WLOOP     TD =X'05' 0
+    55            JEQ WLOOP 0
+    58           LDCH BUFFER,X 0
+    5b             WD =X'05' 0
+    5e           TIXR T 0
+    60            JLT WLOOP 0
+    63           RSUB  0
+     7        =C'EOF'
+     a         =X'05'
+     b     END FIRST

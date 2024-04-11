@@ -13,12 +13,14 @@
 
 std::unordered_map<std::string, std::pair<std::string,int>> OpcodeTable;
 std::unordered_map<std::string, std::pair<std::pair<int,int>,bool>> SymbolTable;
-std::unordered_map<std::string, std::pair<int,bool>> literalTable;
+std::unordered_map<std::string, std::pair<std::pair<int,int>,bool>> literalTable;
 std::unordered_set<std::string> assemblerDirective;
 std::vector<std::vector<std::string>> file;
 std::vector<std::vector<std::string>> listing;
 std::vector<std::string> modification;          
 std::unordered_map<std::string,int> registers;
+std::unordered_map<std::string, std::vector<int>> blkTable;
+std::vector<std::string> blocks_ka_vector, literals_ka_vector;
 
 std::string intToBinaryOpcode(int value) {
     // Mask to extract the last 8 bits
@@ -289,7 +291,9 @@ void firstPass(
     std::unordered_set<std::string> assemblerDirective)
     {
     int locationCounter = 0;
-    
+    std::string blk = "(default)";
+    int no_of_blks = 0;
+    blocks_ka_vector.push_back(blk);
     // Open the intermediate file for writing
     std::ofstream intermediateFile("intermediate.txt");
     if (!intermediateFile.is_open()) {
@@ -298,10 +302,32 @@ void firstPass(
     }
 
     for(const auto& instruction : instructions){
+        //check if block change
+        if(instruction[1] == "USE"){
+            if(instruction[2] == ""){
+                //default block
+                locationCounter = blkTable["(default)"][2];
+                blk = "(default)";
+            }
+            else if(blkTable.find(instruction[2]) != blkTable.end()){
+                //continue old block
+                locationCounter = blkTable[instruction[2]][2];
+                blk = instruction[2];
+            }
+            else{
+                locationCounter = 0;
+                no_of_blks++;
+                blkTable[instruction[2]] = {no_of_blks,0,0};
+                blk = instruction[2];
+                blocks_ka_vector.push_back(blk);
+            }
+            continue;
+        }
         // check for literal
         if(instruction[2][0] == '='){
             //literal present
-            literalTable[instruction[2].substr(1)] = std::make_pair(-1, false);
+            literalTable[instruction[2].substr(1)] = std::make_pair(std::make_pair(-1,blkTable[blk][0]), false);
+            literals_ka_vector.push_back(instruction[2]);
         }
         // Check if the instruction has a label
         if(!instruction[0].empty()){
@@ -312,37 +338,38 @@ void firstPass(
                 std::cerr << "Error: Redefinition of symbol '" << instruction[0] << "'" << std::endl;
             } else {
                 // Add the label to the symbol table with the current location counter
-                symbolTable[instruction[0]] = std::make_pair(std::make_pair(locationCounter,0), false);
+                symbolTable[instruction[0]] = std::make_pair(std::make_pair(locationCounter,blkTable[blk][0]), false);
             }
         }
         if(instruction[1] == "EQU"){
             // check if *
             if(instruction[2] == "*"){
-                symbolTable[instruction[0]] = std::make_pair(std::make_pair(locationCounter,0),false);
+                symbolTable[instruction[0]] = std::make_pair(std::make_pair(locationCounter,blkTable[blk][0]),false);
             }
             else{
                 std::pair<int,bool> val = parseExpression(instruction[2]);
-                symbolTable[instruction[0]] = std::make_pair(std::make_pair(val.first,0),val.second);
+                if(!val.second) symbolTable[instruction[0]] = std::make_pair(std::make_pair(val.first,blkTable[blk][0]),val.second);
+                else symbolTable[instruction[0]] = std::make_pair(std::make_pair(val.first,0),val.second);
             }
             
             continue;
         }
         if(instruction[1] == "LTORG" || instruction[1] == "END"){
-            for(auto &sym : literalTable){
-                if(!sym.second.second){
-                    std::string t = sym.first;
-                    t = "=" + t;
-                    sym.second.first = locationCounter;
-                    sym.second.second = true;
+            for(auto &sym : literals_ka_vector){
+                if(!literalTable[sym].second){
+                    std::string t = sym;
+                    literalTable[sym].first.first = locationCounter;
+                    literalTable[sym].first.second = blkTable[blk][0];
+                    literalTable[sym].second = true;
                     intermediateFile << std::setw(6) << std::hex << locationCounter << " ";
                     intermediateFile << "       ";
                     intermediateFile << std::setw(7) << t;
                     intermediateFile << std::endl;
-                    if(sym.first[0] == 'C'){
-                        locationCounter += (sym.first.length()-3);
+                    if(sym[1] == 'C'){
+                        locationCounter += (sym.length()-4);
                     }
-                    else if(sym.first[0] == 'X'){
-                        locationCounter += (sym.first.length()-3)/2;
+                    else if(sym[1] == 'X'){
+                        locationCounter += (sym.length()-4)/2;
                     }
                     else{
                         std::cerr << "Can't parse literals with non-byte values" << std::endl;
@@ -412,10 +439,18 @@ void firstPass(
         }
         intermediateFile << " ";
         intermediateFile << instruction[2]; 
-        
+        intermediateFile << " ";
+        intermediateFile << blkTable[blk][0];
         intermediateFile << std::endl;
+        blkTable[blk][2] = locationCounter;
     }
-
+    int tot = 0;
+    for(auto &block : blocks_ka_vector){
+        if(block != "(default)"){
+            blkTable[block][1] = tot;
+        }
+        tot += blkTable[block][2];
+    }
     // Close the intermediate file
     intermediateFile.close();
     storeSymbolTable("symboltable.txt",symbolTable);
@@ -442,9 +477,17 @@ void secondPass(
         std::vector<std::string> temp;
         int length = -1;
         std::stringstream ss(line);
-        std::string col1,col2,col3,col4;
-        ss >> col1 >> col2 >> col3 >> col4;
-        if(col4 == ""){
+        std::string col1,col2,col3,col4,col5;
+        ss >> col1 >> col2 >> col3 >> col4 >> col5;
+        if(col5 == "" && col4 == ""){
+            //no label and no operand
+            col5 = col3;
+            col3 = col2;
+            col2 = "";
+        }
+        else if(col5 == ""){
+            //no label
+            col5 = col4;
             col4 = col3;
             col3 = col2;
             col2 = "";
@@ -486,7 +529,7 @@ void secondPass(
                 directive = true;
                 std::cout << "found ASS : " << col3.substr(1) << std::endl;
                 if(col3.substr(1) == "BASE"){
-                    base_contents = (*(symbolTable.find(col4))).second.first.first;
+                    base_contents = (*(symbolTable.find(col4))).second.first.first + blkTable[blocks_ka_vector[std::stoi(col5)]][1];
                     base = true;
                 }
                 else if(col3.substr(1) == "NOBASE"){
@@ -513,7 +556,7 @@ void secondPass(
                 directive = true;
                 std::cout << "found ASS : " << col3 << std::endl;
                 if(col3 == "BASE"){
-                    base_contents = (*(symbolTable.find(col4))).second.first.first;
+                    base_contents = (*(symbolTable.find(col4))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4))).second.first.second]][1];
                     base = true;
                 }
                 else if(col3 == "NOBASE"){
@@ -594,7 +637,7 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('0');
                 binstruction.push_back('1');
-                binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first.first);
+                binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first.second]][1]);
                 modification.push_back(generateModification(col1));
             }
             else if(col4[0] == '@'){//immediate
@@ -604,7 +647,7 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('0');
                 binstruction.push_back('1');  
-                binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first.first);
+                binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4.substr(1)))).second.first.second]][1]);
                 modification.push_back(generateModification(col1));
             }
             else if(col4[0] == '#'){
@@ -621,7 +664,7 @@ void secondPass(
                 }
                 else{
                     //label
-                    binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first.first);
+                    binstruction += addressGenerator20bit((*(symbolTable.find(col4.substr(1)))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4.substr(1)))).second.first.second]][1]);
                     modification.push_back(generateModification(col1));
                 }
                 
@@ -634,9 +677,9 @@ void secondPass(
                 binstruction.push_back('0');
                 binstruction.push_back('1');
                 if(col4[0] == '='){
-                    binstruction += addressGenerator20bit((*(literalTable.find(col4.substr(1)))).second.first);
+                    binstruction += addressGenerator20bit((*(literalTable.find(col4.substr(1)))).second.first.first + blkTable[blocks_ka_vector[(*(literalTable.find(col4.substr(1)))).second.first.second]][1]);
                 }
-                else binstruction += addressGenerator20bit((*(symbolTable.find(col4))).second.first.first);
+                else binstruction += addressGenerator20bit((*(symbolTable.find(col4))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4))).second.first.second]][1]);
                 modification.push_back(generateModification(col1));
             }
 
@@ -662,13 +705,13 @@ void secondPass(
                     //label 
                     //try PC relative
                     int pc = std::stoi(col1,nullptr,16) + length;
-                    int disp = (*(symbolTable.find(col4.substr(1)))).second.first.first - pc;
+                    int disp = (*(symbolTable.find(col4.substr(1)))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4.substr(1)))).second.first.second]][1] - pc;
                     if(disp >= -2048 && disp <= 2047){
                         binstruction += "0010";
                         binstruction += addressGenerator12bit(disp);
                     }
                     else if(base){
-                        disp = (*(symbolTable.find(col4.substr(1)))).second.first.first - base_contents;
+                        disp = (*(symbolTable.find(col4.substr(1)))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4.substr(1)))).second.first.second]][1] - base_contents;
                         if(disp >= 0 && disp <= 4095){
                             binstruction += "0100";
                             binstruction += addressGenerator12bit(disp);
@@ -696,13 +739,13 @@ void secondPass(
                     //label 
                     //try PC relative
                     int pc = std::stoi(col1,nullptr,16) + length;
-                    int disp = (*(symbolTable.find(col4.substr(1)))).second.first.first - pc;
+                    int disp = (*(symbolTable.find(col4.substr(1)))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4.substr(1)))).second.first.second]][1] - pc;
                     if(disp >= -2048 && disp <= 2047){
                         binstruction += "0010";
                         binstruction += addressGenerator12bit(disp);
                     }
                     else if(base){
-                        disp = (*(symbolTable.find(col4.substr(1)))).second.first.first - base_contents;
+                        disp = (*(symbolTable.find(col4.substr(1)))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4.substr(1)))).second.first.second]][1] - base_contents;
                         if(disp >= 0 && disp <= 4095){
                             binstruction += "0100";
                             binstruction += addressGenerator12bit(disp);
@@ -731,13 +774,13 @@ void secondPass(
                     else{
                         //label
                         int pc = std::stoi(col1,nullptr,16) + length;
-                        int disp = (*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first.first - pc;
+                        int disp = (*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first.second]][1] - pc;
                         if(disp >= -2048 && disp <= 2047){
                             binstruction += "1010";
                             binstruction += addressGenerator12bit(disp);
                         }
                         else if(base){
-                            disp = (*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first.first - base_contents;
+                            disp = (*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4.substr(0,col4.length()-2)))).second.first.second]][1] - base_contents;
                             if(disp >= 0 && disp <= 4095){
                                 binstruction += "1100";
                                 binstruction += addressGenerator12bit(disp);
@@ -763,15 +806,18 @@ void secondPass(
                         int pc = std::stoi(col1,nullptr,16) + length;
                         int disp;
                         if(col4[0] == '='){
-                            disp = (*(literalTable.find(col4.substr(1)))).second.first - pc;
+                            disp = (*(literalTable.find(col4.substr(1)))).second.first.first + blkTable[blocks_ka_vector[(*(literalTable.find(col4.substr(1)))).second.first.second]][1] - pc;
                         }
-                        else disp = (*(symbolTable.find(col4))).second.first.first - pc;
+                        else disp = (*(symbolTable.find(col4))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4))).second.first.second]][1] - pc;
                         if(disp >= -2048 && disp <= 2047){
                             binstruction += "0010";
                             binstruction += addressGenerator12bit(disp);
                         }
                         else if(base){
-                            disp = (*(symbolTable.find(col4))).second.first.first - base_contents;
+                            if(col4[0] == '='){
+                                disp = (*(literalTable.find(col4.substr(1)))).second.first.first + blkTable[blocks_ka_vector[(*(literalTable.find(col4.substr(1)))).second.first.second]][1] - base_contents;
+                            }
+                            else disp = (*(symbolTable.find(col4))).second.first.first + blkTable[blocks_ka_vector[(*(symbolTable.find(col4))).second.first.second]][1] - base_contents;
                             if(disp >= 0 && disp <= 4095){
                                 binstruction += "0100";
                                 binstruction += addressGenerator12bit(disp);
@@ -872,6 +918,7 @@ void writeObjectFile(std::vector<std::vector<std::string>> listing, std::string 
 }
 
 int main(){
+    blkTable["(default)"] = {0,0,0};
     OpcodeTable = importOpcodeTable("opcodes.txt");
     assemblerDirective = importAssemblerDirectives("directives.txt");
     registers = importRegisters("registers.txt");
@@ -882,10 +929,13 @@ int main(){
     printAssembly(file);
     firstPass(file, OpcodeTable, SymbolTable, assemblerDirective);
     printSymbolTable(SymbolTable);
-    // printSymbolTable(literalTable);
+    printSymbolTable(literalTable);
     printIntermediateFile("intermediate.txt");
     secondPass("intermediate.txt", OpcodeTable, SymbolTable, assemblerDirective,listing);
     printListing(listing);
     storeListing(listing,"listing.txt");
     writeObjectFile(listing,"obj.txt");
+    for(auto &i : blkTable){
+        std::cout << i.first << " " << i.second[0] << " " <<i.second[1] << " " <<i.second[2] << std::endl;
+    }
 }
